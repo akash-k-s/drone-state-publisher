@@ -38,14 +38,19 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
-    
+        cflib.crtp.init_drivers()
+        self.factory = CachedCfFactory(rw_cache='./cache')
+        self.publishernode()
+        self.SubscriberNode()
+        self.start()
+
+    def publishernode(self):
         self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
         self.publisher_1 = self.create_publisher(Float64MultiArray,'drones_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drones_goals',10)
         self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
         self.tf_broadcaster = TransformBroadcaster(self)
-
         timer_period = 0.05 # seconds
         print("start")
         self.position_data = dict()
@@ -61,10 +66,6 @@ class MinimalPublisher(Node):
         self.drone_active_list.data =[1]*self.number_drones
         self.radius_list.data =[0.15]*self.number_drones
         self.waypoint_publisher.data = [0.0]*2*self.number_drones
-        cflib.crtp.init_drivers()
-        self.factory = CachedCfFactory(rw_cache='./cache')
-        self.SubscriberNode()
-        self.start()
 
     def SubscriberNode(self):
         self.subscribers = []
@@ -87,11 +88,13 @@ class MinimalPublisher(Node):
         topic = self.get_topic_name(msg)
         self.path_dict[topic]=[msg]
         self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
+        print(self.path_dict)
 
     def callback2(self, msg):
         topic = self.get_topic_name(msg)
         self.path_found[topic] =[msg]
         self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
+        print(self.path_found)
 
     def get_topic_name(self, msg):
         for subscriber in self.subscribers:
