@@ -15,6 +15,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
 from nav_msgs.msg import TransformStamped, Vector3
+from tf2_ros import TransformBroadcaster
 
 #drone radios channels
 
@@ -43,7 +44,8 @@ class MinimalPublisher(Node):
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drone_waypoints',10)
         self.publisher_radii = self.create_publisher(Float64MultiArray,'drone_radius',10)
-        self.tf_pub = self.create_publisher(TransformStamped,"tf",10)
+        self.tf_broadcaster = TransformBroadcaster(self)
+
         timer_period = 0.05 # seconds
         print("start")
         self.position_data = dict()
@@ -103,17 +105,18 @@ class MinimalPublisher(Node):
             self.path_found_topic.append(found)
 
     def Transform_Publisher(self):
-        for i in len(uris):
+        for i in range(self.number_drones):
             tf_msg = TransformStamped()
-            tf_msg.header.frame_id = 'base_link'
+            tf_msg.header.frame_id = 'odom'
             tf_msg.child_frame_id = uris[i]
             tf_msg.header.stamp = self.get_clock().now().to_msg()
 
             tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
             tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
             #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+       
 
-            self.tf_pub.publish(tf_msg)
+            self.tf_broadcaster.sendTransform(tf_msg)
 
 
     def reset(self):
