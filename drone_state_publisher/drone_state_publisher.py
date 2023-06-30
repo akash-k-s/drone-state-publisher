@@ -40,10 +40,10 @@ class MinimalPublisher(Node):
         super().__init__('minimal_publisher')
 
         self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
-        self.publisher_1 = self.create_publisher(Float64MultiArray,'drone_states',10)
+        self.publisher_1 = self.create_publisher(Float64MultiArray,'drones_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drone_waypoints',10)
-        self.publisher_radii = self.create_publisher(Float64MultiArray,'drone_radius',10)
+        self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
         timer_period = 0.05 # seconds
         print("start")
         self.position_data = dict()
@@ -117,7 +117,7 @@ class MinimalPublisher(Node):
             self.setpoints_pickup_2(uris[1],uris[2])
             self.setpoints_pickup_1(uris[0])
             while(1):
-                print("")
+                self.setpoints_pickup_1(uris[0])
             #    swarm.parallel_safe(self.land)
     
 
