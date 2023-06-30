@@ -17,6 +17,8 @@ from std_msgs.msg import Bool
 from geometry_msgs.msg import TransformStamped, Vector3
 from tf2_ros import TransformBroadcaster
 
+from nav_msgs.msg import Path
+
 #drone radios channels
 
 A = 'radio://0/100/2M/E7E7E7E700'
@@ -72,7 +74,7 @@ class MinimalPublisher(Node):
         self.topics_create()
         for self.topic in self.path_topics:
             print(self.topic)
-            subscriber_path = self.create_subscription(Float64MultiArray, self.topic, self.callback1, 10)
+            subscriber_path = self.create_subscription(Path, self.topic, self.callback1, 10)
             #subscriber_path.topic_name = self.topic
             #self.subscribers.append(subscriber_path)
         self.get_logger().info(f'Subscribed to topics: {self.path_topics}')
