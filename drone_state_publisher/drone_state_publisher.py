@@ -97,8 +97,8 @@ class MinimalPublisher(Node):
         self.path_topics=[]
         self.path_found_topic = []   
         for i in range(self.number_drones):
-            topic=str('/path')+str(i)
-            found=str('/path_found')+str(i)
+            topic=str('/drone_path')+str(i)
+            found=str('/drone_path')+str(i)+str('found')
             self.path_topics.append(topic)
             self.path_found_topic.append(found)
 
@@ -117,7 +117,7 @@ class MinimalPublisher(Node):
             self.setpoints_pickup_2(uris[1],uris[2])
             self.setpoints_pickup_1(uris[0])
             while(1):
-                print(" ")
+                print("")
             #    swarm.parallel_safe(self.land)
     
 
