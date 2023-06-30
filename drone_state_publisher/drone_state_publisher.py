@@ -42,7 +42,7 @@ class MinimalPublisher(Node):
         self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
         self.publisher_1 = self.create_publisher(Float64MultiArray,'drones_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
-        self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drone_waypoints',10)
+        self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drones_goals',10)
         self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
         timer_period = 0.05 # seconds
         print("start")
