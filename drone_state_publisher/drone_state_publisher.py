@@ -13,6 +13,7 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Float64MultiArray
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Bool
 
 #drone radios channels
 
@@ -38,7 +39,7 @@ class MinimalPublisher(Node):
     def __init__(self):
         super().__init__('minimal_publisher')
 
-        self.publisher_ = self.create_publisher(Int32, 'number_drones', 10)
+        self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
         self.publisher_1 = self.create_publisher(Float64MultiArray,'drone_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drone_waypoints',10)
@@ -63,17 +64,19 @@ class MinimalPublisher(Node):
 
     def SubscriberNode(self):
         self.subscribers = []
-        self.topics_create
-        for topic in self.path_topics:
-            subscriber_path = self.create_subscription(Float64MultiArray, topic, self.callback1, 10)
-            subscriber_path.topic_name = topic
-            self.subscribers.append(subscriber_path)
+        self.topics_create()
+        for self.topic in self.path_topics:
+            print(self.topic)
+            subscriber_path = self.create_subscription(Float64MultiArray, self.topic, self.callback1, 10)
+            #subscriber_path.topic_name = self.topic
+            #self.subscribers.append(subscriber_path)
         self.get_logger().info(f'Subscribed to topics: {self.path_topics}')
 
-        for topic in self.path_found_topic:
-            subscriber_path_found = self.create_subscription(bool, topic, self.callback2, 10)
-            subscriber_path_found.topic_name = topic
-            self.subscribers.append(subscriber_path_found)
+        for self.topic in self.path_found_topic:
+            print(self.topic)
+            subscriber_path_found = self.create_subscription(Bool, self.topic, self.callback2, 10)
+            #subscriber_path_found.topic_name = self.topic
+            #self.subscribers.append(subscriber_path_found)
 
     
     def callback1(self, msg):
@@ -96,8 +99,8 @@ class MinimalPublisher(Node):
         for i in range(self.number_drones):
             topic=str('/path')+str(i)
             found=str('/path_found')+str(i)
-            self.topics.append(topic)
-            self.path_found_topic(found)
+            self.path_topics.append(topic)
+            self.path_found_topic.append(found)
 
     def reset(self):
         self.swarm_.reset_estimators()
@@ -254,7 +257,7 @@ class MinimalPublisher(Node):
         yaw=0 # angle of drone
         self.waypoint_data[uri_1]= [x1,y1]
         self.waypoint_data[uri_2]= [x2,y2] 
-    def drone_1(self,uri_1):
+    def setpoints_pickup_1(self,uri_1):
         cx=0
         cy=0
         self.waypoint_data[uri_1]= [cx,cy]
