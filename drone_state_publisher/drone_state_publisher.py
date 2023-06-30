@@ -21,10 +21,10 @@ from tf2_ros import TransformBroadcaster
 
 A = 'radio://0/100/2M/E7E7E7E700'
 B = 'radio://0/100/2M/E7E7E7E701'
-C = 'radio://0/100/2M/E7E7E7E707'  # F 
-#D = 'radio://0/100/2M/E7E7E7E706' # Y
+#C = 'radio://0/100/2M/E7E7E7E707'  # F 
+D = 'radio://0/100/2M/E7E7E7E706' # Y
 
-uris = [A,B,C]
+uris = [A,B,D]
 
 class MinimalPublisher(Node):
     
