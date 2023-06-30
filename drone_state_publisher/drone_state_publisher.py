@@ -14,6 +14,7 @@ from std_msgs.msg import Float64MultiArray
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
+from nav_msgs.msg import TransformStamped, Vector3
 
 #drone radios channels
 
@@ -23,8 +24,6 @@ C = 'radio://0/100/2M/E7E7E7E707'  # F
 #D = 'radio://0/100/2M/E7E7E7E706' # Y
 
 uris = [A,B,C]
-lock=Lock()
-
 
 class MinimalPublisher(Node):
     
@@ -38,12 +37,13 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
-
+    
         self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
-        self.publisher_1 = self.create_publisher(Float64MultiArray,'drones_states',10)
+        self.publisher_1 = self.create_publisher(Float64MultiArray,'drone_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
-        self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drones_goals',10)
-        self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
+        self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drone_waypoints',10)
+        self.publisher_radii = self.create_publisher(Float64MultiArray,'drone_radius',10)
+        self.tf_pub = self.create_publisher(TransformStamped,"tf",10)
         timer_period = 0.05 # seconds
         print("start")
         self.position_data = dict()
@@ -102,6 +102,20 @@ class MinimalPublisher(Node):
             self.path_topics.append(topic)
             self.path_found_topic.append(found)
 
+    def Transform_Publisher(self):
+        for i in len(uris):
+            tf_msg = TransformStamped()
+            tf_msg.header.frame_id = 'base_link'
+            tf_msg.child_frame_id = uris[i]
+            tf_msg.header.stamp = self.get_clock().now().to_msg()
+
+            tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
+            tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+            #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+
+            self.tf_pub.publish(tf_msg)
+
+
     def reset(self):
         self.swarm_.reset_estimators()
 
@@ -117,7 +131,7 @@ class MinimalPublisher(Node):
             self.setpoints_pickup_2(uris[1],uris[2])
             self.setpoints_pickup_1(uris[0])
             while(1):
-                self.setpoints_pickup_1(uris[0])
+                print("")
             #    swarm.parallel_safe(self.land)
     
 
@@ -175,6 +189,7 @@ class MinimalPublisher(Node):
 
         print(self.waypoint_publisher)
         self.publisher_waypoints.publish(self.waypoint_publisher)
+        self.Transform_Publisher()
 
 
 
