@@ -13,9 +13,8 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Float64MultiArray
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
+from nav_msgs.msg import Path
 from std_msgs.msg import Bool
-from geometry_msgs.msg import TransformStamped, Vector3
-from tf2_ros import TransformBroadcaster
 
 #drone radios channels
 
@@ -25,6 +24,8 @@ C = 'radio://0/100/2M/E7E7E7E707'  # F
 #D = 'radio://0/100/2M/E7E7E7E706' # Y
 
 uris = [A,B,C]
+lock=Lock()
+
 
 class MinimalPublisher(Node):
     
@@ -38,20 +39,16 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
-    
+
         self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
         self.publisher_1 = self.create_publisher(Float64MultiArray,'drones_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drones_goals',10)
         self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
-        self.tf_broadcaster = TransformBroadcaster(self)
-
         timer_period = 0.05 # seconds
         print("start")
         self.position_data = dict()
         self.waypoint_data =dict()
-        self.path_dict =dict()
-        self.path_found =dict()
         self.float_list = Float64MultiArray()
         self.drone_active_list=Int32MultiArray()
         self.waypoint_publisher = Float64MultiArray()
@@ -71,7 +68,7 @@ class MinimalPublisher(Node):
         self.topics_create()
         for self.topic in self.path_topics:
             print(self.topic)
-            subscriber_path = self.create_subscription(Float64MultiArray, self.topic, self.callback1, 10)
+            subscriber_path = self.create_subscription(Path, self.topic, self.callback1, 10)
             #subscriber_path.topic_name = self.topic
             #self.subscribers.append(subscriber_path)
         self.get_logger().info(f'Subscribed to topics: {self.path_topics}')
@@ -85,12 +82,10 @@ class MinimalPublisher(Node):
     
     def callback1(self, msg):
         topic = self.get_topic_name(msg)
-        self.path_dict[topic]=[msg]
         self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
 
     def callback2(self, msg):
         topic = self.get_topic_name(msg)
-        self.path_found[topic] =[msg]
         self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
 
     def get_topic_name(self, msg):
@@ -108,21 +103,6 @@ class MinimalPublisher(Node):
             self.path_topics.append(topic)
             self.path_found_topic.append(found)
 
-    def Transform_Publisher(self):
-        for i in range(self.number_drones):
-            tf_msg = TransformStamped()
-            tf_msg.header.frame_id = 'odom'
-            tf_msg.child_frame_id = str("drone")+str(i)
-            tf_msg.header.stamp = self.get_clock().now().to_msg()
-
-            tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
-            tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
-            #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
-       
-
-            self.tf_broadcaster.sendTransform(tf_msg)
-
-
     def reset(self):
         self.swarm_.reset_estimators()
 
@@ -135,12 +115,10 @@ class MinimalPublisher(Node):
             swarm.parallel_safe(self.simple_log_async)
             #swarm.parallel_safe(self.take_off)
             #self.setpoints_pickup_3(uris[0],uris[1],uris[2])
-            #self.setpoints_pickup_2(uris[1],uris[2])
+            self.setpoints_pickup_2(uris[1],uris[2])
             self.setpoints_pickup_1(uris[0])
             while(1):
                 self.setpoints_pickup_1(uris[0])
-                self.setpoints_pickup_1(uris[1])
-                self.setpoints_pickup_1(uris[2])
             #    swarm.parallel_safe(self.land)
     
 
@@ -198,7 +176,6 @@ class MinimalPublisher(Node):
 
         print(self.waypoint_publisher)
         self.publisher_waypoints.publish(self.waypoint_publisher)
-        self.Transform_Publisher()
 
 
 
@@ -282,8 +259,8 @@ class MinimalPublisher(Node):
         self.waypoint_data[uri_1]= [x1,y1]
         self.waypoint_data[uri_2]= [x2,y2] 
     def setpoints_pickup_1(self,uri_1):
-        cx=0
-        cy=0
+        cx=1
+        cy=1
         self.waypoint_data[uri_1]= [cx,cy]
 
 

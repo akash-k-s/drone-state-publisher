@@ -1,0 +1,35 @@
+running egg_info
+creating build/drone_state_publisher/drone_state_publisher.egg-info
+writing build/drone_state_publisher/drone_state_publisher.egg-info/PKG-INFO
+writing dependency_links to build/drone_state_publisher/drone_state_publisher.egg-info/dependency_links.txt
+writing entry points to build/drone_state_publisher/drone_state_publisher.egg-info/entry_points.txt
+writing requirements to build/drone_state_publisher/drone_state_publisher.egg-info/requires.txt
+writing top-level names to build/drone_state_publisher/drone_state_publisher.egg-info/top_level.txt
+writing manifest file 'build/drone_state_publisher/drone_state_publisher.egg-info/SOURCES.txt'
+reading manifest file 'build/drone_state_publisher/drone_state_publisher.egg-info/SOURCES.txt'
+writing manifest file 'build/drone_state_publisher/drone_state_publisher.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build
+creating /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib
+creating /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher
+copying drone_state_publisher/__init__.py -> /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher
+copying drone_state_publisher/drone_state_publisher.py -> /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher
+running install
+running install_lib
+creating /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher
+copying /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher/__init__.py -> /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher
+copying /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher/drone_state_publisher.py -> /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher
+byte-compiling /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher/__init__.py to __init__.cpython-38.pyc
+byte-compiling /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher/drone_state_publisher.py to drone_state_publisher.cpython-38.pyc
+running install_data
+creating /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/share/ament_index
+creating /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/share/ament_index/resource_index
+creating /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/share/ament_index/resource_index/packages
+copying resource/drone_state_publisher -> /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/share/ament_index/resource_index/packages
+copying package.xml -> /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/share/drone_state_publisher
+running install_egg_info
+Copying build/drone_state_publisher/drone_state_publisher.egg-info to /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher-0.0.0-py3.8.egg-info
+running install_scripts
+Installing drone_state_publisher script to /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/drone_state_publisher
+writing list of installed files to '/home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/install.log'
