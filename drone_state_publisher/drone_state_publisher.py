@@ -74,37 +74,73 @@ class MinimalPublisher(Node):
     def SubcriberNode(self):
         self.topics_create()
         print(self.path_topics)
+        print(self.path_found_topic)
         self.current_path = []
         self.subcriber_list = []
+        self.subcriber_path_found_list =[]
+        self.path_found_list=[]
         for i in range(self.number_drones):
 
-            self.current_path.append([0, 0])
+            self.current_path.append([1, 1])
+            self.path_found_list.append(0)
             
-        for i in range(self.number_drones):
+        for i in range(0, self.number_drones):
             print("creating subscription")
             subscriber_path = self.create_subscription(
                 Path,
                 self.path_topics[i],
-                lambda msg: self.update_path(i, msg),
+                self.path_callback_generator(i),
                 10
             )
             self.subcriber_list.append(subscriber_path) 
-       
+            subscriber_path_found = self.create_subscription(
+                Bool,
+                self.path_found_topic[i],
+                self.update_path_found_generator(i),
+                10
+            ) 
+            self.subcriber_path_found_list.append(subscriber_path_found)
             
-    def update_path(self, i, msg):
-        print(f'in call back {i}')
-        self.current_path[i] = []
-        for pose in msg.poses:
-            self.get_logger().info(f'Received path {pose.pose.position}')
-            self.current_path[i].append((pose.pose.position.x, pose.pose.position.y))
+    # def update_path(self, i, msg):
+    #     print(f'in call back {i}')
+    #     self.current_path[i] = []
+    #     for pose in msg.poses:
+    #         self.get_logger().info(f'Received path {(pose.pose.position.x, pose.pose.position.y)}')
+    #         self.current_path[i].append((pose.pose.position.x, pose.pose.position.y))
         
-        print(self.current_path)
+    #     print(self.current_path)
 
-    # def path_callback(self, i):
-    #     print("entered call back generator")
-    #     def callback(self, msg):
-    #     print("exited")
-    #     return callback
+    # def update_path_found(self,i,msg):
+    #     print("entered path found call back")
+    #     self.path_found_list[i]=msg.data
+
+    #     print(self.path_found_list)
+
+
+    def path_callback_generator(self, i):
+        print("entered call back generator")
+        def callback(msg):
+            print(f'in call back {i}')
+            self.current_path[i] = []
+            for pose in msg.poses:
+                self.get_logger().info(f'Received path {(pose.pose.position.x, pose.pose.position.y)}')
+                self.current_path[i].append((pose.pose.position.x, pose.pose.position.y))
+        
+            print(self.current_path)
+            
+        print("returning callback")
+        return callback
+    
+    def update_path_found_generator(self,i):
+        def callback1(msg):
+            
+            self.get_logger().info(f'path found {(msg.data)}')
+            self.path_found_list[i]= msg.data
+            print(self.path_found_list)
+        return callback1
+
+
+
 
         # self.get_logger().info(f'Received path {msg.poses}')
         # self.current_path[i] = []
@@ -122,9 +158,11 @@ class MinimalPublisher(Node):
         self.path_found_topic = []   
         for i in range(self.number_drones):
             topic=str('/drone_path')+str(i)
-            #found=str('/drone_path')+str(i)+str('found')
+            found=str('/drone_path')+str(i)+str('found')
             self.path_topics.append(topic)
-            #self.path_found_topic.append(found)
+            print(found)
+            print(topic)
+            self.path_found_topic.append(found)
 
     def Transform_Publisher(self):
         for i in range(self.number_drones):

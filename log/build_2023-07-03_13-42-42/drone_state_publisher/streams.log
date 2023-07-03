@@ -1,0 +1,24 @@
+[0.402s] Invoking command in '/home/akash/swarm_ws/src/drone_state_publisher': PYTHONPATH=/home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/prefix_override:/home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base build/drone_state_publisher build --build-base /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build install --record /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/install.log --install-scripts $base/lib/drone_state_publisher --single-version-externally-managed
+[0.536s] running egg_info
+[0.536s] writing build/drone_state_publisher/drone_state_publisher.egg-info/PKG-INFO
+[0.536s] writing dependency_links to build/drone_state_publisher/drone_state_publisher.egg-info/dependency_links.txt
+[0.537s] writing entry points to build/drone_state_publisher/drone_state_publisher.egg-info/entry_points.txt
+[0.537s] writing requirements to build/drone_state_publisher/drone_state_publisher.egg-info/requires.txt
+[0.537s] writing top-level names to build/drone_state_publisher/drone_state_publisher.egg-info/top_level.txt
+[0.561s] reading manifest file 'build/drone_state_publisher/drone_state_publisher.egg-info/SOURCES.txt'
+[0.561s] writing manifest file 'build/drone_state_publisher/drone_state_publisher.egg-info/SOURCES.txt'
+[0.561s] running build
+[0.561s] running build_py
+[0.561s] copying drone_state_publisher/drone_state_publisher.py -> /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher
+[0.561s] running install
+[0.562s] running install_lib
+[0.562s] copying /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build/lib/drone_state_publisher/drone_state_publisher.py -> /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher
+[0.562s] byte-compiling /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher/drone_state_publisher.py to drone_state_publisher.cpython-38.pyc
+[0.564s] running install_data
+[0.565s] running install_egg_info
+[0.565s] removing '/home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher-0.0.0-py3.8.egg-info' (and everything under it)
+[0.566s] Copying build/drone_state_publisher/drone_state_publisher.egg-info to /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages/drone_state_publisher-0.0.0-py3.8.egg-info
+[0.566s] running install_scripts
+[0.576s] Installing drone_state_publisher script to /home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/drone_state_publisher
+[0.576s] writing list of installed files to '/home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/install.log'
+[0.588s] Invoked command in '/home/akash/swarm_ws/src/drone_state_publisher' returned '0': PYTHONPATH=/home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/prefix_override:/home/akash/swarm_ws/src/drone_state_publisher/install/drone_state_publisher/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base build/drone_state_publisher build --build-base /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/build install --record /home/akash/swarm_ws/src/drone_state_publisher/build/drone_state_publisher/install.log --install-scripts $base/lib/drone_state_publisher --single-version-externally-managed

@@ -13,19 +13,20 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Float64MultiArray
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
-from nav_msgs.msg import Path
 from std_msgs.msg import Bool
+from geometry_msgs.msg import TransformStamped, Vector3
+from tf2_ros import TransformBroadcaster
+
+from nav_msgs.msg import Path
 
 #drone radios channels
 
 A = 'radio://0/100/2M/E7E7E7E700'
 B = 'radio://0/100/2M/E7E7E7E701'
-C = 'radio://0/100/2M/E7E7E7E707'  # F 
-#D = 'radio://0/100/2M/E7E7E7E706' # Y
+#C = 'radio://0/100/2M/E7E7E7E707'  # F 
+D = 'radio://0/100/2M/E7E7E7E706' # Y
 
-uris = [A,B,C]
-lock=Lock()
-
+uris = [A,B]
 
 class MinimalPublisher(Node):
     
@@ -39,16 +40,27 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
+        cflib.crtp.init_drivers()
+        self.factory = CachedCfFactory(rw_cache='./cache')
+        self.publishernode()
+        self.SubcriberNode()
+        print("spinning")
+        # rclpy.spin(self)
+        self.start()
 
+    def publishernode(self):
         self.publisher_ = self.create_publisher(Int32, 'num_drones', 10)
         self.publisher_1 = self.create_publisher(Float64MultiArray,'drones_states',10)
         self.publisher_active =self.create_publisher(Int32MultiArray,'drones_active',10)
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drones_goals',10)
         self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
+        self.tf_broadcaster = TransformBroadcaster(self)
         timer_period = 0.05 # seconds
         print("start")
         self.position_data = dict()
         self.waypoint_data =dict()
+        self.path_dict =dict()
+        self.path_found =dict()
         self.float_list = Float64MultiArray()
         self.drone_active_list=Int32MultiArray()
         self.waypoint_publisher = Float64MultiArray()
@@ -58,41 +70,70 @@ class MinimalPublisher(Node):
         self.drone_active_list.data =[1]*self.number_drones
         self.radius_list.data =[0.15]*self.number_drones
         self.waypoint_publisher.data = [0.0]*2*self.number_drones
-        cflib.crtp.init_drivers()
-        self.factory = CachedCfFactory(rw_cache='./cache')
-        self.SubscriberNode()
-        self.start()
 
-    def SubscriberNode(self):
-        self.subscribers = []
+    def SubcriberNode(self):
         self.topics_create()
-        for self.topic in self.path_topics:
-            print(self.topic)
-            subscriber_path = self.create_subscription(Path, self.topic, self.callback1, 10)
-            #subscriber_path.topic_name = self.topic
-            #self.subscribers.append(subscriber_path)
-        self.get_logger().info(f'Subscribed to topics: {self.path_topics}')
+        print(self.path_topics)
+        print(self.path_found_topic)
+        self.current_path = []
+        self.subcriber_list = []
+        self.subcriber_path_found_list =[]
+        self.path_found_list=[]
+        for i in range(self.number_drones):
 
-        for self.topic in self.path_found_topic:
-            print(self.topic)
-            subscriber_path_found = self.create_subscription(Bool, self.topic, self.callback2, 10)
-            #subscriber_path_found.topic_name = self.topic
-            #self.subscribers.append(subscriber_path_found)
+            self.current_path.append([1, 1])
+            
+        for i in range(self.number_drones):
+            print("creating subscription")
+            subscriber_path = self.create_subscription(
+                Path,
+                self.path_topics[i],
+                lambda msg: self.update_path(i, msg),
+                10
+            )
+            self.subcriber_list.append(subscriber_path) 
+            subscriber_path_found = self.create_subscription(
+                Bool,
+                self.path_found_topic[i],
+                lambda msg: self.update_path_found(i,msg),
+                10
+            ) 
+            self.subcriber_path_found_list.append(subscriber_path_found)
+            
+    def update_path(self, i, msg):
+        print(f'in call back {i}')
+        self.current_path[i] = []
+        for pose in msg.poses:
+            self.get_logger().info(f'Received path {pose.pose.position}')
+            self.current_path[i].append((pose.pose.position.x, pose.pose.position.y))
+        
+        print(self.current_path)
 
+    def update_path_found(self,i,msg):
+        print("entered path found call back")
+        for data in msg.bool:
+            self.get_logger().info(f'Received path {data}')
+            self.path_found_list.append(data)
+
+        print(self.path_found_list)
+
+
+    # def path_callback(self, i):
+    #     print("entered call back generator")
+    #     def callback(self, msg):
+    #     print("exited")
+    #     return callback
+
+        # self.get_logger().info(f'Received path {msg.poses}')
+        # self.current_path[i] = []
+        # for pose in msg.poses:
+        #         self.current_path[i].append((pose.position.x, pose.position.y))
+        # return self.path_callback(lambda msg,i: self.path_callback(msg))
     
-    def callback1(self, msg):
-        topic = self.get_topic_name(msg)
-        self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
+        # self.current_path[index][0] = msg.poses.pose.position.x
+        # self.current_path[index][1] = msg.poses.pose.position.y
+        # print(self.current_path)
 
-    def callback2(self, msg):
-        topic = self.get_topic_name(msg)
-        self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
-
-    def get_topic_name(self, msg):
-        for subscriber in self.subscribers:
-            if subscriber.topic_name in msg._full_text:
-                return subscriber.topic_name
-        return 'Unknown Topic'
 
     def topics_create(self):
         self.path_topics=[]
@@ -101,13 +142,33 @@ class MinimalPublisher(Node):
             topic=str('/drone_path')+str(i)
             found=str('/drone_path')+str(i)+str('found')
             self.path_topics.append(topic)
+            print(found)
+            print(topic)
             self.path_found_topic.append(found)
+
+    def Transform_Publisher(self):
+        for i in range(self.number_drones):
+            tf_msg = TransformStamped()
+            tf_msg.header.frame_id = 'odom'
+            tf_msg.child_frame_id = str("drone")+str(i)
+            tf_msg.header.stamp = self.get_clock().now().to_msg()
+
+            try:
+                tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
+                tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+                #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+        
+
+                self.tf_broadcaster.sendTransform(tf_msg)
+            except:
+                print("skipping first trnsform publishin")
 
     def reset(self):
         self.swarm_.reset_estimators()
 
 
     def start(self):
+        print("started")
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
@@ -115,10 +176,13 @@ class MinimalPublisher(Node):
             swarm.parallel_safe(self.simple_log_async)
             #swarm.parallel_safe(self.take_off)
             #self.setpoints_pickup_3(uris[0],uris[1],uris[2])
-            self.setpoints_pickup_2(uris[1],uris[2])
+            #self.setpoints_pickup_2(uris[1],uris[2])
             self.setpoints_pickup_1(uris[0])
             while(1):
+                rclpy.spin_once(self)
                 self.setpoints_pickup_1(uris[0])
+                self.setpoints_pickup_1(uris[1])
+                #self.setpoints_pickup_1(uris[2])
             #    swarm.parallel_safe(self.land)
     
 
@@ -131,7 +195,7 @@ class MinimalPublisher(Node):
         self.vy = float(data['stateEstimate.vy'])
         
         self.position_data[scf] = [self.x,self.y,self.vx,self.vy,scf]
-        print("got data")
+        # print("got data")
         #time.sleep(0.7)
         self.timer_callback()   
         
@@ -151,7 +215,7 @@ class MinimalPublisher(Node):
         #lg_stab.stop()
 
     def timer_callback(self):
-        print("in timer")
+        # print("in timer")
         msg = Int32()
         self.number_drones=len(uris)
         msg.data = self.number_drones
@@ -163,19 +227,25 @@ class MinimalPublisher(Node):
         self.publisher_radii.publish(self.radius_list)
         
         for i in range(self.number_drones):
-            self.float_list.data[i*4] = self.position_data.get(uris[i])[0]
-            self.float_list.data[i*4+1] =self.position_data.get(uris[i])[1]
-            self.float_list.data[i*4+2] = self.position_data.get(uris[i])[2]
-            self.float_list.data[i*4+3] = self.position_data.get(uris[i])[3]
-        print(self.float_list)
+            try:
+                self.float_list.data[i*4] = self.position_data.get(uris[i])[0]
+                self.float_list.data[i*4+1] =self.position_data.get(uris[i])[1]
+                self.float_list.data[i*4+2] = self.position_data.get(uris[i])[2]
+                self.float_list.data[i*4+3] = self.position_data.get(uris[i])[3]
+            except:
+                print("skipping once")
+        #print(self.float_list)
         self.publisher_1.publish(self.float_list)
 
         for i in range(self.number_drones):
-            self.waypoint_publisher.data[i*2] =   self.waypoint_data.get(uris[i])[0]
-            self.waypoint_publisher.data[i*2+1] = self.waypoint_data.get(uris[i])[1]
-
-        print(self.waypoint_publisher)
+            try:
+                self.waypoint_publisher.data[i*2] =   self.waypoint_data.get(uris[i])[0]
+                self.waypoint_publisher.data[i*2+1] = self.waypoint_data.get(uris[i])[1]
+            except:
+                print("skipping waypoint once")
+        #print(self.waypoint_publisher)
         self.publisher_waypoints.publish(self.waypoint_publisher)
+        self.Transform_Publisher()
 
 
 
@@ -259,8 +329,8 @@ class MinimalPublisher(Node):
         self.waypoint_data[uri_1]= [x1,y1]
         self.waypoint_data[uri_2]= [x2,y2] 
     def setpoints_pickup_1(self,uri_1):
-        cx=1
-        cy=1
+        cx=0
+        cy=0
         self.waypoint_data[uri_1]= [cx,cy]
 
 
@@ -277,8 +347,6 @@ def main(args=None):
 
 
     print ("main")
-    rclpy.spin(minimal_publisher)
-    print("spinninng")
     minimal_publisher.destroy_node()
     rclpy.shutdown()
 
