@@ -26,7 +26,7 @@ B = 'radio://0/100/2M/E7E7E7E701'
 #C = 'radio://0/100/2M/E7E7E7E707'  # F 
 D = 'radio://0/100/2M/E7E7E7E706' # Y
 
-uris = [A,B,D]
+uris = [A]
 
 class MinimalPublisher(Node):
     
@@ -43,7 +43,7 @@ class MinimalPublisher(Node):
         cflib.crtp.init_drivers()
         self.factory = CachedCfFactory(rw_cache='./cache')
         self.publishernode()
-        self.SubscriberNode()
+        self.SubcriberNode()
         self.start()
 
     def publishernode(self):
@@ -69,49 +69,42 @@ class MinimalPublisher(Node):
         self.radius_list.data =[0.15]*self.number_drones
         self.waypoint_publisher.data = [0.0]*2*self.number_drones
 
-    def SubscriberNode(self):
-        self.subscribers = []
+    def SubcriberNode(self):
         self.topics_create()
-        for self.topic in self.path_topics:
-            print(self.topic)
-            subscriber_path = self.create_subscription(Path, self.topic, self.callback1, 10)
-            #subscriber_path.topic_name = self.topic
-            #self.subscribers.append(subscriber_path)
-        self.get_logger().info(f'Subscribed to topics: {self.path_topics}')
+        print(self.path_topics)
+        self.current_path = []
 
-        for self.topic in self.path_found_topic:
-            print(self.topic)
-            subscriber_path_found = self.create_subscription(Bool, self.topic, self.callback2, 10)
-            #subscriber_path_found.topic_name = self.topic
-            #self.subscribers.append(subscriber_path_found)
+        for i in range(self.number_drones):
 
-    
-    def callback1(self, msg):
-        topic = self.get_topic_name(msg)
-        self.path_dict[topic]=[msg]
-        self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
-        print(self.path_dict)
+            self.current_path.append([0, 0])
+            
+        for i in range(self.number_drones):
+            
+            self.subscriber_path = self.create_subscription(
+                Path,
+                self.path_topics[i],
+                self.path_callback,
+                10
+            )
+#            self.subscriber_path 
+       
+            
 
-    def callback2(self, msg):
-        topic = self.get_topic_name(msg)
-        self.path_found[topic] =[msg]
-        self.get_logger().info(f'Received message on topic {topic}: {msg.data}')
-        print(self.path_found)
+    def path_callback(self, msg):
+        self.get_logger().info(f'Received path {msg.poses}')
+        # self.current_path[index][0] = msg.poses.pose.position.x
+        # self.current_path[index][1] = msg.poses.pose.position.y
+        # print(self.current_path)
 
-    def get_topic_name(self, msg):
-        for subscriber in self.subscribers:
-            if subscriber.topic_name in msg._full_text:
-                return subscriber.topic_name
-        return 'Unknown Topic'
 
     def topics_create(self):
         self.path_topics=[]
         self.path_found_topic = []   
         for i in range(self.number_drones):
             topic=str('/drone_path')+str(i)
-            found=str('/drone_path')+str(i)+str('found')
+            #found=str('/drone_path')+str(i)+str('found')
             self.path_topics.append(topic)
-            self.path_found_topic.append(found)
+            #self.path_found_topic.append(found)
 
     def Transform_Publisher(self):
         for i in range(self.number_drones):
@@ -144,8 +137,8 @@ class MinimalPublisher(Node):
             self.setpoints_pickup_1(uris[0])
             while(1):
                 self.setpoints_pickup_1(uris[0])
-                self.setpoints_pickup_1(uris[1])
-                self.setpoints_pickup_1(uris[2])
+                #self.setpoints_pickup_1(uris[1])
+                #self.setpoints_pickup_1(uris[2])
             #    swarm.parallel_safe(self.land)
     
 
