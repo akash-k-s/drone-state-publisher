@@ -26,7 +26,7 @@ B = 'radio://0/100/2M/E7E7E7E701'
 #C = 'radio://0/100/2M/E7E7E7E707'  # F 
 D = 'radio://0/100/2M/E7E7E7E706' # Y
 
-uris = [A]
+uris = [A,B]
 
 class MinimalPublisher(Node):
     
@@ -44,6 +44,8 @@ class MinimalPublisher(Node):
         self.factory = CachedCfFactory(rw_cache='./cache')
         self.publishernode()
         self.SubcriberNode()
+        print("spinning")
+        # rclpy.spin(self)
         self.start()
 
     def publishernode(self):
@@ -73,25 +75,43 @@ class MinimalPublisher(Node):
         self.topics_create()
         print(self.path_topics)
         self.current_path = []
-
+        self.subcriber_list = []
         for i in range(self.number_drones):
 
             self.current_path.append([0, 0])
             
         for i in range(self.number_drones):
-            
-            self.subscriber_path = self.create_subscription(
+            print("creating subscription")
+            subscriber_path = self.create_subscription(
                 Path,
                 self.path_topics[i],
-                self.path_callback,
+                lambda msg: self.update_path(i, msg),
                 10
             )
-#            self.subscriber_path 
+            self.subcriber_list.append(subscriber_path) 
        
             
+    def update_path(self, i, msg):
+        print(f'in call back {i}')
+        self.current_path[i] = []
+        for pose in msg.poses:
+            self.get_logger().info(f'Received path {pose.pose.position}')
+            self.current_path[i].append((pose.pose.position.x, pose.pose.position.y))
+        
+        print(self.current_path)
 
-    def path_callback(self, msg):
-        self.get_logger().info(f'Received path {msg.poses}')
+    # def path_callback(self, i):
+    #     print("entered call back generator")
+    #     def callback(self, msg):
+    #     print("exited")
+    #     return callback
+
+        # self.get_logger().info(f'Received path {msg.poses}')
+        # self.current_path[i] = []
+        # for pose in msg.poses:
+        #         self.current_path[i].append((pose.position.x, pose.position.y))
+        # return self.path_callback(lambda msg,i: self.path_callback(msg))
+    
         # self.current_path[index][0] = msg.poses.pose.position.x
         # self.current_path[index][1] = msg.poses.pose.position.y
         # print(self.current_path)
@@ -113,19 +133,22 @@ class MinimalPublisher(Node):
             tf_msg.child_frame_id = str("drone")+str(i)
             tf_msg.header.stamp = self.get_clock().now().to_msg()
 
-            tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
-            tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
-            #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
-       
+            try:
+                tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
+                tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+                #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+        
 
-            self.tf_broadcaster.sendTransform(tf_msg)
-
+                self.tf_broadcaster.sendTransform(tf_msg)
+            except:
+                print("skipping first trnsform publishin")
 
     def reset(self):
         self.swarm_.reset_estimators()
 
 
     def start(self):
+        print("started")
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
@@ -136,8 +159,9 @@ class MinimalPublisher(Node):
             #self.setpoints_pickup_2(uris[1],uris[2])
             self.setpoints_pickup_1(uris[0])
             while(1):
+                rclpy.spin_once(self)
                 self.setpoints_pickup_1(uris[0])
-                #self.setpoints_pickup_1(uris[1])
+                self.setpoints_pickup_1(uris[1])
                 #self.setpoints_pickup_1(uris[2])
             #    swarm.parallel_safe(self.land)
     
@@ -151,7 +175,7 @@ class MinimalPublisher(Node):
         self.vy = float(data['stateEstimate.vy'])
         
         self.position_data[scf] = [self.x,self.y,self.vx,self.vy,scf]
-        print("got data")
+        # print("got data")
         #time.sleep(0.7)
         self.timer_callback()   
         
@@ -171,7 +195,7 @@ class MinimalPublisher(Node):
         #lg_stab.stop()
 
     def timer_callback(self):
-        print("in timer")
+        # print("in timer")
         msg = Int32()
         self.number_drones=len(uris)
         msg.data = self.number_drones
@@ -183,18 +207,23 @@ class MinimalPublisher(Node):
         self.publisher_radii.publish(self.radius_list)
         
         for i in range(self.number_drones):
-            self.float_list.data[i*4] = self.position_data.get(uris[i])[0]
-            self.float_list.data[i*4+1] =self.position_data.get(uris[i])[1]
-            self.float_list.data[i*4+2] = self.position_data.get(uris[i])[2]
-            self.float_list.data[i*4+3] = self.position_data.get(uris[i])[3]
-        print(self.float_list)
+            try:
+                self.float_list.data[i*4] = self.position_data.get(uris[i])[0]
+                self.float_list.data[i*4+1] =self.position_data.get(uris[i])[1]
+                self.float_list.data[i*4+2] = self.position_data.get(uris[i])[2]
+                self.float_list.data[i*4+3] = self.position_data.get(uris[i])[3]
+            except:
+                print("skipping once")
+        #print(self.float_list)
         self.publisher_1.publish(self.float_list)
 
         for i in range(self.number_drones):
-            self.waypoint_publisher.data[i*2] =   self.waypoint_data.get(uris[i])[0]
-            self.waypoint_publisher.data[i*2+1] = self.waypoint_data.get(uris[i])[1]
-
-        print(self.waypoint_publisher)
+            try:
+                self.waypoint_publisher.data[i*2] =   self.waypoint_data.get(uris[i])[0]
+                self.waypoint_publisher.data[i*2+1] = self.waypoint_data.get(uris[i])[1]
+            except:
+                print("skipping waypoint once")
+        #print(self.waypoint_publisher)
         self.publisher_waypoints.publish(self.waypoint_publisher)
         self.Transform_Publisher()
 
@@ -298,8 +327,6 @@ def main(args=None):
 
 
     print ("main")
-    rclpy.spin(minimal_publisher)
-    print("spinninng")
     minimal_publisher.destroy_node()
     rclpy.shutdown()
 
