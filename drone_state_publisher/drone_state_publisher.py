@@ -241,6 +241,7 @@ class MinimalPublisher(Node):
             #self.setpoints_pickup_3(uris[0],uris[1],uris[2])
             #self.setpoints_pickup_2(uris[1],uris[2])
             #self.setpoints_pickup_1(uris[0])
+            self.pickup_complete_list = dict()
             self.setpoints_pickup_1(uris[0],0,1.4)
             self.setpoints_pickup_1(uris[1],-1,-1)
             while(1):
@@ -250,6 +251,7 @@ class MinimalPublisher(Node):
                 
                 seq_=self.seq()
                 swarm.parallel_safe(self.run_sequence, args_dict=seq_)
+
                 #self.setpoints_pickup_1(uris[2])
                 #swarm.parallel_safe(self.land)
     
@@ -386,6 +388,10 @@ class MinimalPublisher(Node):
         #     else:
         #         continue
 
+    def seq_list_creator(self):
+        self.seq_list = []
+        for i in range(self.number_drones):
+            self.seq_list.append('sequence'+str(i))
 
 
     def seq(self):   
@@ -408,27 +414,38 @@ class MinimalPublisher(Node):
         print("in seq")
         print(setpoints_list)
         duration = 10
-
         
-
-        sequence0 = [
-                (setpoints_list[0][0][0],setpoints_list[0][0][1] , 1,0, duration)
+        for i in range(self.seq_list):
+            if(self.pickup_complete_list.get(uris[i])[1]==1):
+                    self.seq_list[i]=[
+                    (setpoints_list[i][0][0],setpoints_list[i][0][1],0.4,0,duration)
+                ]
+            else:
+                self.seq_list[i]=[
+                    (setpoints_list[i][0][0],setpoints_list[i][0][1],1,0,duration)
                 ]
 
-        sequence1 = [
-            (setpoints_list[1][0][0],setpoints_list[1][0][1] , 1,0, duration)
-            ]
+        # sequence0 = [
+        #         (setpoints_list[0][0][0],setpoints_list[0][0][1] , 1,0, duration)
+        #         ]
+
+        # sequence1 = [
+        #     (setpoints_list[1][0][0],setpoints_list[1][0][1] , 1,0, duration)
+        #     ]
 
 
         #sequence2 = [
         #    (drone_setpoint[4],drone_setpoint[5] , 1,drone_setpoint[6], time)
         #]
-        seq_args = {
+        seq_args = dict()
+        for i in range(self.number_drones):
+            seq_args.update({uris[i]:[self.seq_list[i]]})
+    #     seq_args = {
 
-        uris[0]: [sequence0],
-        uris[1]: [sequence1]
-        #uris[2]: [sequence2]
-    }
+    #     uris[0]: [sequence0],
+    #     uris[1]: [sequence1]
+    #     #uris[2]: [sequence2]
+    # }
         return seq_args
     
 
@@ -485,6 +502,77 @@ class MinimalPublisher(Node):
         y=cy
         self.waypoint_data[uri_1]= [x,y]
 
+    def reached_final_setpoint(self,drone_uri):
+
+        allowed_distance = 0.05
+        
+        current_position_drone_x = self.position_data.get(drone_uri)[0]
+        current_position_drone_y = self.position_data.get(drone_uri)[1]
+
+        distance_to_setpoint = math.sqrt((current_position_drone_x-self.waypoint_data[drone_uri][0])**2 +(current_position_drone_y-self.waypoint_data[drone_uri][1])**2)
+
+        if distance_to_setpoint <= allowed_distance:
+            drone_reached = 1
+        else:
+            drone_reached = 0
+        return drone_reached
+    
+    def pickup_generator(self):
+
+        for i in range(len(uris)):
+            self.pickup_complete_list.update({uris[i]:[self.reached_final_setpoint(uris[i]),0]})
+    
+    def pick_up(self,uri_list):
+
+        self.pickup_generator(uri_list)
+        check=1
+        
+        for i in range(len(uri_list)):
+            check=check*self.pickup_complete_list.get(uri_list[i])[0]
+        
+        if check == 1:
+            for i in range(len(uri_list)):
+                self.pickup_complete_list.update({uri_list[i]:[1,1]})
+        
+            
+                
+
+
+
+
+
+
+        """
+        
+        if number_of_drones_payload ==1:
+            if self.reached_final_setpoint(uri_list[0]) == 1:
+                pickup_list[0] = 1
+            elif self.reached_final_setpoint(uri_list[0]) == 0:
+                pickup_list[0] = 0
+
+        if number_of_drones_payload == 2:
+            if self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) == 1:
+                pickup_list[0] = 1
+                pickup_list[1] = 1
+            elif self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) == 0:
+                pickup_list[0] = 0
+                pickup_list[1] = 0
+
+        if number_of_drones_payload == 3 :
+            if self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) and self.reached_final_setpoint(uri_list[2]) == 1:
+                pickup_list[0] = 1
+                pickup_list[1] = 1
+                pickup_list[2] = 1
+            elif self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) and self.reached_final_setpoint(uri_list[2]) == 1:
+                pickup_list[0] = 0
+                pickup_list[1] = 0
+                pickup_list[2] = 0
+        
+        return pickup_list
+
+        """
+
+    def pickup_sequence(self):
 
 
 
