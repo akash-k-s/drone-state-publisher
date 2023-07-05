@@ -327,7 +327,7 @@ class MinimalPublisher(Node):
         results_list = []
 
         for i in range(self.number_drones):
-            results_list.append([[self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1]]])
+            results_list.append([[self.position_data.get(uris[i])[0],self.position_data.get(uris[i])[1]]])
         print(f'result{results_list}')
 
         for i in range(self.number_drones):
