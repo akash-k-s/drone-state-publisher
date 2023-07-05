@@ -281,7 +281,7 @@ class MinimalPublisher(Node):
 
     def setpoints_splitter(self):
         distance_max=1
-        distance_min=0.2
+        distance_min=0.1
         results_list = []
 
         for i in range(self.number_drones):
@@ -295,12 +295,18 @@ class MinimalPublisher(Node):
                 x = self.position_data.get(uris[i])[0]
                 y = self.position_data.get(uris[i])[1]
                 distance_setpoints_min= 100000
+                index=0
                 for j in range(0,len(set_pts)):
                     distance_between_setpoint = (x-set_pts[j][0])**2 + (y-set_pts[j][1])**2
                     print(distance_between_setpoint)
                     if(distance_between_setpoint>distance_min**2 and distance_between_setpoint<distance_setpoints_min):
                         distance_setpoints_min=distance_between_setpoint
                         results_list[i]=[[set_pts[j][0],set_pts[j][1]]]
+                        index=j
+                if(index==len(set_pts)-1):
+                    results_list[i]=[[self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1]]]
+                else:
+                    results_list[i]=[[set_pts][j+1][0],set_pts[j+1][0]]
         print(f'updated list{results_list}')
         return results_list
 
