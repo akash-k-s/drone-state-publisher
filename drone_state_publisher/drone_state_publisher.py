@@ -281,7 +281,7 @@ class MinimalPublisher(Node):
 
     def setpoints_splitter(self):
         distance_max=1
-        distance_min=0.1
+        distance_min=0.2
         results_list = []
 
         for i in range(self.number_drones):
@@ -356,7 +356,7 @@ class MinimalPublisher(Node):
             print('Setting position {} to cf {}'.format((x, y, z,yaw), cf.link_uri))
             #commander.set_default_velocity(0.2)
             commander.go_to(x, y, z, yaw, duration, relative=False)
-            time.sleep(duration)
+            time.sleep(1)
 
 
     def setpoints_pickup_3(self,uri_1,uri_2,uri_3):
@@ -396,7 +396,7 @@ class MinimalPublisher(Node):
 
     def reached_final_setpoint(self,drone_uri):
 
-        allowed_distance = 0.05
+        allowed_distance = 0.15
         
         current_position_drone_x = self.position_data.get(drone_uri)[0]
         current_position_drone_y = self.position_data.get(drone_uri)[1]
