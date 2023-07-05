@@ -21,12 +21,12 @@ from nav_msgs.msg import Path
 
 #drone radios channels
 
-A = 'radio://0/100/2M/E7E7E7E700' # N
-B = 'radio://0/100/2M/E7E7E7E701'
-C = 'radio://0/100/2M/E7E7E7E707'  # F 
-D = 'radio://0/100/2M/E7E7E7E706' # Y
+N = 'radio://0/100/2M/E7E7E7E700' # N
+V = 'radio://0/100/2M/E7E7E7E701' # v
+F = 'radio://0/100/2M/E7E7E7E707'  # F 
+Y = 'radio://0/100/2M/E7E7E7E706' # Y
 
-uris = [B,C]
+uris = [V,F]
 
 class MinimalPublisher(Node):
     
@@ -242,13 +242,16 @@ class MinimalPublisher(Node):
             #self.setpoints_pickup_2(uris[1],uris[2])
             #self.setpoints_pickup_1(uris[0])
             self.pickup_complete_list = dict()
-            self.setpoints_pickup_1(uris[0],0,1.4)
+            self.seq_list_creator()
+            self.setpoints_pickup_1(uris[0],-1,1.4)
             self.setpoints_pickup_1(uris[1],-1,-1)
             while(1):
                 rclpy.spin_once(self)
                 #self.list1 = self.setpoints_splitter()
                 #print(self.list1)
-                
+                self.pickup_generator()
+                self.pick_up([uris[0]])
+                self.pick_up([uris[1]])
                 seq_=self.seq()
                 swarm.parallel_safe(self.run_sequence, args_dict=seq_)
 
@@ -413,9 +416,9 @@ class MinimalPublisher(Node):
         setpoints_list= self.setpoints_splitter()
         print("in seq")
         print(setpoints_list)
-        duration = 10
+        duration = 5
         
-        for i in range(self.seq_list):
+        for i in range(self.number_drones):
             if(self.pickup_complete_list.get(uris[i])[1]==1):
                     self.seq_list[i]=[
                     (setpoints_list[i][0][0],setpoints_list[i][0][1],0.4,0,duration)
@@ -521,13 +524,13 @@ class MinimalPublisher(Node):
 
         for i in range(len(uris)):
             self.pickup_complete_list.update({uris[i]:[self.reached_final_setpoint(uris[i]),0]})
+        print(self.pickup_complete_list)
     
     def pick_up(self,uri_list):
 
-        self.pickup_generator(uri_list)
-        check=1
-        
+        check=1        
         for i in range(len(uri_list)):
+            print(uri_list[i])
             check=check*self.pickup_complete_list.get(uri_list[i])[0]
         
         if check == 1:
@@ -571,9 +574,6 @@ class MinimalPublisher(Node):
         return pickup_list
 
         """
-
-    def pickup_sequence(self):
-
 
 
 
