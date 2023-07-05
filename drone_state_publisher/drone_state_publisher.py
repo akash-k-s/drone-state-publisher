@@ -189,41 +189,6 @@ class MinimalPublisher(Node):
             self.path_found_list[i]= msg.data
             print(self.path_found_list)
         return callback1
-    
-
-            
-    # def update_path(self, i, msg):
-    #     print(f'in call back {i}')
-    #     self.current_path[i] = []
-    #     for pose in msg.poses:
-    #         self.get_logger().info(f'Received path {(pose.pose.position.x, pose.pose.position.y)}')
-    #         self.current_path[i].append((pose.pose.position.x, pose.pose.position.y))
-        
-    #     print(self.current_path)
-
-    # def update_path_found(self,i,msg):
-    #     print("entered path found call back")
-    #     self.path_found_list[i]=msg.data
-
-    #     print(self.path_found_list)
-
-
-    
-
-    
-
-
-        # self.get_logger().info(f'Received path {msg.poses}')
-        # self.current_path[i] = []
-        # for pose in msg.poses:
-        #         self.current_path[i].append((pose.position.x, pose.position.y))
-        # return self.path_callback(lambda msg,i: self.path_callback(msg))
-    
-        # self.current_path[index][0] = msg.poses.pose.position.x
-        # self.current_path[index][1] = msg.poses.pose.position.y
-        # print(self.current_path)
-
-    
 
 
     def reset(self):
@@ -313,18 +278,6 @@ class MinimalPublisher(Node):
         time.sleep(2)
         commander.stop()
     
-    # def setpoints(self):
-    #     setpoints_list=[]
-    #     for i in range(self.number_drones):
-    #         setpoints_list.append([0,0])
-    #         try:
-    #             setpoints_list[i] = ([[self.position_data.get(uris[i])[0],self.position_data.get(uris[i])[1]]])
-    #         except:
-    #             setpoints_list[i] = ([[0,0]])
-    #         for j in range (len(self.current_path[i])):
-    #             setpoints_list[i].append(self.current_path[i][j])
-    #             #print(setpoints_list)
-    #     return setpoints_list
 
     def setpoints_splitter(self):
         distance_max=1
@@ -351,45 +304,6 @@ class MinimalPublisher(Node):
         print(f'updated list{results_list}')
         return results_list
 
-                    
-
-
-    
-
-
-
-
-        # for i in range(len(setpoints_list)):
-        #     set_pts=setpoints_list[i]
-        #     #print(set_pts)
-        #     if self.path_found_list[i] == True:
-        #         update=1
-        #         j=0
-        #         while(update):
-        #             update=0
-        #             #for j in range(0,len(set_pts)-2):
-        #             #print(set_pts[j+1])
-        #             distance_between_setpoint = (set_pts[j][0]-set_pts[j+1][0])**2 + (set_pts[j][1]-set_pts[j+1][1])**2
-        #             #print(distance_between_setpoint,i)
-        #             if(distance_between_setpoint>distance_max**2):
-        #                 new_setpoint = [(set_pts[j][0]+set_pts[j+1][0])/2, (set_pts[j][1]+set_pts[j+1][1])/2]
-        #                 #print(new_setpoint)
-        #                 set_pts.insert(j+1,new_setpoint)
-        #                 j = 0
-        #                 update = 1
-        #             elif(distance_between_setpoint<distance_min**2):
-        #                 #print(set_pts)
-        #                 #print(f"poped eletement{set_pts[j+1]}")
-        #                 x=set_pts.pop(j+1)
-        #                 #print(x)
-        #                 #print(set_pts)
-        #                 update =1
-        #             else:
-        #                 set_pts = set_pts
-        #                 #j = j+1
-        #             #print(set_pts)
-        #     else:
-        #         continue
 
     def seq_list_creator(self):
         self.seq_list = []
@@ -398,21 +312,6 @@ class MinimalPublisher(Node):
 
 
     def seq(self):   
-        #drone_setpoint=setpoint_payload_3(i)
-        #if(i==0):
-            # drone_setpoint=pickup_2()
-            # time=6.0
-        # else:
-            # drone_setpoint = setpoint_payload_2(drones_poistion,set_pts,i,d)
-            # time= 2.0
-        
-        """
-        sequence = [x,y,z,yaw,duration]
-        x,y,z goto commands
-        yaw angle of drone
-        duration : time to reach setpoints
-        """
-
         setpoints_list= self.setpoints_splitter()
         print("in seq")
         print(setpoints_list)
@@ -428,27 +327,10 @@ class MinimalPublisher(Node):
                     (setpoints_list[i][0][0],setpoints_list[i][0][1],1,0,duration)
                 ]
 
-        # sequence0 = [
-        #         (setpoints_list[0][0][0],setpoints_list[0][0][1] , 1,0, duration)
-        #         ]
-
-        # sequence1 = [
-        #     (setpoints_list[1][0][0],setpoints_list[1][0][1] , 1,0, duration)
-        #     ]
-
-
-        #sequence2 = [
-        #    (drone_setpoint[4],drone_setpoint[5] , 1,drone_setpoint[6], time)
-        #]
         seq_args = dict()
         for i in range(self.number_drones):
             seq_args.update({uris[i]:[self.seq_list[i]]})
-    #     seq_args = {
 
-    #     uris[0]: [sequence0],
-    #     uris[1]: [sequence1]
-    #     #uris[2]: [sequence2]
-    # }
         return seq_args
     
 
@@ -538,42 +420,6 @@ class MinimalPublisher(Node):
                 self.pickup_complete_list.update({uri_list[i]:[1,1]})
         
             
-                
-
-
-
-
-
-
-        """
-        
-        if number_of_drones_payload ==1:
-            if self.reached_final_setpoint(uri_list[0]) == 1:
-                pickup_list[0] = 1
-            elif self.reached_final_setpoint(uri_list[0]) == 0:
-                pickup_list[0] = 0
-
-        if number_of_drones_payload == 2:
-            if self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) == 1:
-                pickup_list[0] = 1
-                pickup_list[1] = 1
-            elif self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) == 0:
-                pickup_list[0] = 0
-                pickup_list[1] = 0
-
-        if number_of_drones_payload == 3 :
-            if self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) and self.reached_final_setpoint(uri_list[2]) == 1:
-                pickup_list[0] = 1
-                pickup_list[1] = 1
-                pickup_list[2] = 1
-            elif self.reached_final_setpoint(uri_list[0]) and self.reached_final_setpoint(uri_list[1]) and self.reached_final_setpoint(uri_list[2]) == 1:
-                pickup_list[0] = 0
-                pickup_list[1] = 0
-                pickup_list[2] = 0
-        
-        return pickup_list
-
-        """
 
 
 
