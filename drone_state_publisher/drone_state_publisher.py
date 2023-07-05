@@ -204,19 +204,19 @@ class MinimalPublisher(Node):
             swarm.parallel_safe(self.simple_log_async)
             swarm.parallel_safe(self.take_off)
             #self.setpoints_pickup_3(uris[0],uris[1],uris[2])
-            #self.setpoints_pickup_2(uris[1],uris[2])
+            self.setpoints_pickup_2(uris[0],uris[1],1,1)
             #self.setpoints_pickup_1(uris[0])
             self.pickup_complete_list = dict()
             self.seq_list_creator()
-            self.setpoints_pickup_1(uris[0],-1,1.4)
-            self.setpoints_pickup_1(uris[1],-1,-1)
+            #self.setpoints_pickup_1(uris[0],-1,1.4)
+            #self.setpoints_pickup_1(uris[1],-1,-1)
             while(1):
                 rclpy.spin_once(self)
                 #self.list1 = self.setpoints_splitter()
                 #print(self.list1)
                 self.pickup_generator()
-                self.pick_up([uris[0]])
-                self.pick_up([uris[1]])
+                self.pick_up([uris[0],uris[1]])
+                #self.pick_up([uris[1]])
                 seq_=self.seq()
                 swarm.parallel_safe(self.run_sequence, args_dict=seq_)
 
@@ -322,6 +322,13 @@ class MinimalPublisher(Node):
                     self.seq_list[i]=[
                     (setpoints_list[i][0][0],setpoints_list[i][0][1],0.4,0,duration)
                 ]
+                    self.pickup_complete_list.update({uris[i]:[1,2]})
+
+            elif(self.pickup_complete_list.get(uris[i])[1]==2):
+                self.seq_list[i]=[
+                    (setpoints_list[i][0][0],setpoints_list[i][0][1],1,0,duration)
+                ]
+                """ update with new way point"""
             else:
                 self.seq_list[i]=[
                     (setpoints_list[i][0][0],setpoints_list[i][0][1],1,0,duration)
@@ -370,10 +377,10 @@ class MinimalPublisher(Node):
         self.waypoint_data[uri_2]= [x2,y2]
         self.waypoint_data[uri_3]= [x3,y3]
 
-    def setpoints_pickup_2(self,uri_1,uri_2):
+    def setpoints_pickup_2(self,uri_1,uri_2,x,y):
         d=0.5 # distance in meters
-        cx=0 #pickup coordinates in x
-        cy=0 #pickup coordinates in y 
+        cx=x #pickup coordinates in x
+        cy=y #pickup coordinates in y 
         x1=cx  # drone1 x
         x2=cx  # drone2 x
         y1=cy-d # drone1 y
