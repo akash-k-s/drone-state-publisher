@@ -304,9 +304,11 @@ class MinimalPublisher(Node):
                         results_list[i]=[[set_pts[j][0],set_pts[j][1]]]
                         index=j
                 if(index==len(set_pts)-1):
+                    
                     results_list[i]=[[self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1]]]
                 else:
-                    results_list[i]=[[set_pts][j+1][0],set_pts[j+1][0]]
+                    print(index,len(set_pts))
+                    results_list[i]=[[set_pts[index+1][0],set_pts[index+1][1]]]
         print(f'updated list{results_list}')
         return results_list
 
@@ -326,14 +328,15 @@ class MinimalPublisher(Node):
         for i in range(self.number_drones):
             if(self.pickup_complete_list.get(uris[i])[1]==1):
                     self.seq_list[i]=[
-                    (setpoints_list[i][0][0],setpoints_list[i][0][1],0.4,0,duration)
+                    (self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1],0.4,0,duration)
                 ]
                     self.pickup_complete_list.update({uris[i]:[1,2]})
 
             elif(self.pickup_complete_list.get(uris[i])[1]==2):
                 self.seq_list[i]=[
-                    (setpoints_list[i][0][0],setpoints_list[i][0][1],1,0,duration)
+                    (self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1],1,0,duration)
                 ]
+
                 """ update with new way point"""
             else:
                 self.seq_list[i]=[
@@ -422,15 +425,28 @@ class MinimalPublisher(Node):
         print(self.pickup_complete_list)
     
     def pick_up(self,uri_list):
-
+        raduis =0.15
         check=1        
         for i in range(len(uri_list)):
             print(uri_list[i])
             check=check*self.pickup_complete_list.get(uri_list[i])[0]
+        if len(uri_list)==2:
+            raduis = 0.275 
+        elif len(uri_list)==3:
+            raduis = 0.40 # yet to be changed with final calculations
         
         if check == 1:
             for i in range(len(uri_list)):
                 self.pickup_complete_list.update({uri_list[i]:[1,1]})
+                for j in range(self.number_drones):
+                    if uris[j] == uri_list[i]:
+                        index =j
+                        self.drone_active_list.data[i]=0
+            self.drone_active_list.data[index] = 1
+            self.radius_list.data[index] = raduis 
+                        
+
+        
         
             
 
