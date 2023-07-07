@@ -26,7 +26,7 @@ V = 'radio://0/100/2M/E7E7E7E701' # v
 F = 'radio://0/100/2M/E7E7E7E707'  # F 
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 
-uris = [V,F]
+uris = [Y]
 
 class MinimalPublisher(Node):
     
@@ -204,19 +204,20 @@ class MinimalPublisher(Node):
             swarm.parallel_safe(self.simple_log_async)
             swarm.parallel_safe(self.take_off)
             #self.setpoints_pickup_3(uris[0],uris[1],uris[2])
-            self.setpoints_pickup_2(uris[0],uris[1],1,1)
-            #self.setpoints_pickup_1(uris[0])
+            #self.setpoints_pickup_2(uris[1],uris[0],0,0)
+            self.setpoints_pickup_1(uris[0],1,1)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
             #self.setpoints_pickup_1(uris[0],-1,1.4)
             #self.setpoints_pickup_1(uris[1],-1,-1)
+            self.pickup_generator_creator()
             while(1):
                 rclpy.spin_once(self)
                 #self.list1 = self.setpoints_splitter()
                 #print(self.list1)
                 self.pickup_generator()
-                self.pick_up([uris[0],uris[1]])
-                #self.pick_up([uris[1]])
+                #self.pick_up([uris[0],uris[1]])
+                self.pick_up([uris[0]])
                 seq_=self.seq()
                 swarm.parallel_safe(self.run_sequence, args_dict=seq_)
 
@@ -331,6 +332,7 @@ class MinimalPublisher(Node):
                     (self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1],0.4,0,duration)
                 ]
                     self.pickup_complete_list.update({uris[i]:[1,2]})
+                    print(self.pickup_complete_list)
 
             elif(self.pickup_complete_list.get(uris[i])[1]==2):
                 self.seq_list[i]=[
@@ -367,13 +369,57 @@ class MinimalPublisher(Node):
             commander.go_to(x, y, z, yaw, duration, relative=False)
             time.sleep(1)
 
+    def path_drones_3(self,uri_1,uri_2,uri_3):
+        y1 = self.position_data.get(uri_1)[1]
+        x1 = self.position_data.get(uri_1)[0]
+        y2 = self.position_data.get(uri_2)[1]
+        x2 = self.position_data.get(uri_2)[0]
+        y3 = self.position_data.get(uri_3)[1]
+        x3 = self.position_data.get(uri_3)[0]
 
-    def setpoints_pickup_3(self,uri_1,uri_2,uri_3):
+
+        vx1 = self.position_data.get(uri_1)[3]
+        vx2 = self.position_data.get(uri_2)[3]
+        vx3 = self.position_data.get(uri_3)[3]
+
+        vy1 = self.position_data.get(uri_1)[4]
+        vy2 = self.position_data.get(uri_2)[4]
+        vy3 = self.position_data.get(uri_3)[4]
+
+        cx = (x1+x2+x3)/3
+        cy = (y1+y2+y3)/3
+        
+        cvx = (vx1 + vx2 + vx3)/3
+        cvy = (vy1 + vy2 + vy3)/3
+
+        return [cx,cy,cvx,cvy]
+
+
+    def dropoff_3_waypoint(self,uri_1,uri_2,uri_3,x,y):
+        distance =0.30
+        cx=x
+        cy=y
+        y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
+        x1= cx-distance/2  # drone1 x
+        y2= cy+(distance)*math.cos(math.pi/6) #drone2 y
+        x2= cx-distance/2 #drone2 x
+
+        y3= cy #drone 3 y
+        x3 = cx+distance
+        y3= cy #drone 3 y
+        x3 = cx # drone 3 x
+        self.waypoint_data[uri_1]= [x1,y1]
+        self.waypoint_data[uri_2]= [x2,y2]
+        self.waypoint_data[uri_3]= [x3,y3]
+
+
+
+    def setpoints_pickup_3(self,uri_1,uri_2,uri_3,x,y):
         distance=0.30 # in meters centroid to drone
         #cx=set_pts[i][0] # x setpoint
         #cy=set_pts[i][1] # y setpoint
-        cx=0
-        cy=0
+        cx=x
+        cy=y
         y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
         x1= cx-distance/2  # drone1 x
         y2= cy+(distance)*math.cos(math.pi/6) #drone2 y
@@ -418,13 +464,21 @@ class MinimalPublisher(Node):
             drone_reached = 0
         return drone_reached
     
+    def pickup_generator_creator(self):
+
+        for i in range(len(uris)):
+            self.pickup_complete_list.update({uris[i]:[0,0]})
+        print(self.pickup_complete_list)
+
     def pickup_generator(self):
 
         for i in range(len(uris)):
-            self.pickup_complete_list.update({uris[i]:[self.reached_final_setpoint(uris[i]),0]})
-        print(self.pickup_complete_list)
+            temp = self.pickup_complete_list.get(uris[i])[1]
+            self.pickup_complete_list.update({uris[i]:[self.reached_final_setpoint(uris[i]),temp]})
+        
     
     def pick_up(self,uri_list):
+        
         raduis =0.15
         check=1        
         for i in range(len(uri_list)):
@@ -435,13 +489,14 @@ class MinimalPublisher(Node):
         elif len(uri_list)==3:
             raduis = 0.40 # yet to be changed with final calculations
         
-        if check == 1:
+        if check == 1 and self.pickup_complete_list.get(uri_list[0])[1]==0:
             for i in range(len(uri_list)):
                 self.pickup_complete_list.update({uri_list[i]:[1,1]})
                 for j in range(self.number_drones):
                     if uris[j] == uri_list[i]:
                         index =j
                         self.drone_active_list.data[i]=0
+            print("updated active list")
             self.drone_active_list.data[index] = 1
             self.radius_list.data[index] = raduis 
                         
