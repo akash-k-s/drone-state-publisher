@@ -25,8 +25,9 @@ N = 'radio://0/100/2M/E7E7E7E700' # N
 V = 'radio://0/100/2M/E7E7E7E701' # v
 F = 'radio://0/100/2M/E7E7E7E707'  # F 
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
+P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [Y]
+uris = [N,V,F,Y,P]
 
 class MinimalPublisher(Node):
     
@@ -203,9 +204,9 @@ class MinimalPublisher(Node):
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
             swarm.parallel_safe(self.take_off)
-            #self.setpoints_pickup_3(uris[0],uris[1],uris[2])
-            #self.setpoints_pickup_2(uris[1],uris[0],0,0)
-            self.setpoints_pickup_1(uris[0],1,1)
+            self.setpoints_pickup_3(uris[0],uris[1],uris[2],0.5,0.5)
+            self.setpoints_pickup_2(uris[3],uris[4],-1,1)
+            #self.setpoints_pickup_1(uris[0],1,1)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
             #self.setpoints_pickup_1(uris[0],-1,1.4)
@@ -297,19 +298,23 @@ class MinimalPublisher(Node):
                 y = self.position_data.get(uris[i])[1]
                 distance_setpoints_min= 100000
                 index=0
+                update=0
                 for j in range(0,len(set_pts)):
-                    distance_between_setpoint = (x-set_pts[j][0])**2 + (y-set_pts[j][1])**2
-                    print(distance_between_setpoint)
-                    if(distance_between_setpoint>distance_min**2 and distance_between_setpoint<distance_setpoints_min):
-                        distance_setpoints_min=distance_between_setpoint
-                        results_list[i]=[[set_pts[j][0],set_pts[j][1]]]
-                        index=j
+                    if(len(set_pts)>2):
+                        distance_between_setpoint = (x-set_pts[j][0])**2 + (y-set_pts[j][1])**2
+                        print(distance_between_setpoint)
+                        if(distance_between_setpoint>distance_min**2 and distance_between_setpoint<distance_setpoints_min):
+                            distance_setpoints_min=distance_between_setpoint
+                            results_list[i]=[[set_pts[j][0],set_pts[j][1]]]
+                            index=j
+                            update=1
                 if(index==len(set_pts)-1):
                     
                     results_list[i]=[[self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1]]]
-                else:
+                elif update==1:
                     print(index,len(set_pts))
                     results_list[i]=[[set_pts[index+1][0],set_pts[index+1][1]]]
+                
         print(f'updated list{results_list}')
         return results_list
 
