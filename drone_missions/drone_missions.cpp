@@ -1,35 +1,50 @@
-#include<stdio.h>
+#include<iostream>
+#include<vector>
 
-
-class Drone
-{
+class Drone {
 private:
-    /* data */
-public:
+    std::vector<float> position;  // Position of the drone [x, y]
+    float payloadCapacity;        // Maximum payload capacity of the drone
+    float velocity;               // Velocity of the drone
 
-    float postion[2] ;
-    float capacity;
+public:
+    std::vector<int> current_postion;
     float total_wait_time;
-    float total_distance;
-    float avg_vel;
-    float initial_postion[2];
+    float toatl_distance;
     float total_time;
 
-    void getpoistion(float pos[2]);
+    // Constructor
+    Drone(float initialX, float initialY, float capacity, float speed)
+        : position({ initialX, initialY }), payloadCapacity(capacity), velocity(speed) {}
 
-    Drone(float cap,float in_pos[2],float speed){
-        initial_postion[0] = in_pos[0];
-        initial_postion[1] = in_pos[1];
-        avg_vel = speed;
-        capacity = cap;
+    // Getter methods
+    float getX() const { return position[0]; }
+    float getY() const { return position[1]; }
+    float getPayloadCapacity() const { return payloadCapacity; }
+    float getVelocity() const { return velocity; }
+
+    // Setter methods
+    void setX(float newX) { position[0] = newX; }
+    void setY(float newY) { position[1] = newY; }
+    void setPayloadCapacity(float newCapacity) { payloadCapacity = newCapacity; }
+    void setVelocity(float newSpeed) { velocity = newSpeed; }
+
+    // Other methods
+    void printPosition() const {
+        std::cout << "Current position: (" << position[0] << ", " << position[1] << ")" << std::endl;
     }
+
+    void set_current_postion(std::vector<int> vec){
+        current_postion[0]=vec[0];
+        current_postion[1]=vec[1];
+    }
+    float get_current_x() const{return current_postion[0];}
+    float get_current_y() const {return current_postion[1];}
+
 
 };
 
-void Drone::getpoistion(float pos[2]){
-    // data from pybind 11
 
-}
 
 class Mission{
     private:
@@ -105,17 +120,20 @@ class Drones{
 void Drones::drones_creater(void){
     Mission mission;
     Drones::drone_lenght = mission.drones_len;
-    int drones_list[Drones::drone_lenght]; 
+    Drone *drones_list[Drones::drone_lenght];
+     
     for(int i=0;i<Drones::drone_lenght;i++){
-        
-
+        drones_list[i]= new Drone(0,0,30,0.1);
     }
+
     
 }
 void Drones::drone_status(void){
 
 }
 int main(){
+    std::vector<int> drones_list
+    
 
     
 
