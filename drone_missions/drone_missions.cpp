@@ -109,6 +109,144 @@ void Mission::mission_start(){
     // add start 
 }
 
+
+class Payload {
+private:
+    std::vector<std::vector<std::pair<float, float>>> locations;
+    int length;  // Length of the payload
+
+public:
+    std::vector<int> payload_idx;
+    std::vector<int> payload_weight;
+    // Constructor
+    Payload() {}
+
+    Payload(int payloadLength)
+        : length(payloadLength) {}
+
+    // Getter method
+    int getLength() const { return length; }
+    std::vector<int> getpayload_idx() const { return payload_idx;}
+    std::vector<int> getpayload_weight() const { return payload_weight;}
+    std::vector<std::vector<std::pair<float, float>>> getLocations() const { return locations; }
+
+    // Setter method
+    void setLength(const int newLength) { length = newLength; }
+    void setpayload_idx(const std::vector<int>& payload_idx_) {
+        if(payload_idx_.size()==Payload::length){
+            payload_idx = payload_idx_;
+        }
+        else{
+            std::cout<<"the lenght of the payload is not same as lenght of payload_idx "<<std::endl;
+        }
+
+    }
+
+    void editLocation(size_t payloadIndex, const std::vector<std::pair<float, float>>& newLocation) {
+        if (payloadIndex < locations.size()) {
+            locations[payloadIndex] = newLocation;
+        } else {
+            std::cout << "Invalid payload index or location index." << std::endl;
+        }
+    }
+
+    void modellocations(){
+        std::vector<std::vector<std::pair<float,float>>> location;
+        std::vector <int> payload_list;
+        location = getLocations();
+        payload_list = getpayload_weight();
+        std::vector<std::pair<float, float>> newlocation;
+        for(int i=0; i<location.size();i++){
+            if(location[i].size() == payload_list[i]){
+                continue;
+            }
+            else if (payload_list[i] == 2){
+                newlocation = split_2(location[i]);
+                editLocation(i,newlocation);
+            }
+            else if(payload_list[i] == 3){
+                newlocation=split_3(location[i]);
+                std::cout<<locations[i][0].first<<std::endl; 
+            }
+        }
+        
+    } 
+
+    std::vector<std::pair<float, float>>split_2(std::vector<std::pair<float,float>> location){
+        float x = location[0].first;
+        float y = location[0].second;
+        float d =0.5;
+        std::vector<std::pair<float,float>> location_;
+        location_= {{x,y-d},{x,y+d}};
+
+        return location_;
+        
+    }
+    
+    std::vector<std::pair<float,float>> split_3(std::vector<std::pair<float,float>> location){
+        float cx = location[0].first;
+        float cy = location[0].second;
+        float d = 0.3;
+        //yet to do;
+         
+    }
+
+
+    void setpayload_weight(const std::vector<int>& payload_weight_){
+        if(payload_weight_.size()==Payload::length){
+            payload_weight=payload_weight_;
+        }
+        else{
+            std::cout<<"lenght of the payload is not same as lenght of payload_weight"<<std::endl;
+        }
+        
+    }
+
+    void setLocations(const std::vector<std::vector<std::pair<float, float>>>& newLocations) {
+        if(newLocations.size()==length){ 
+            locations = newLocations; 
+        }
+        else{
+            std::cout<<"the location lenght is not equal to payload lenght"<<std::endl;
+        }
+    }
+
+
+    // Other methods
+    void print_length(){
+        int x = Payload::getLength();
+        std::cout<<x<<std::endl;
+    }
+
+    void printpayloads_idx() const {
+        std::cout << "Payload idx: ";
+        for (const auto& l : payload_idx) {
+            std::cout << l << " ";
+        }
+        std::cout <<std::endl;
+    }
+
+    void printpayload_weight() const{
+        std::cout<<"Payload weight: ";
+        for(const auto&l : payload_weight){
+            std::cout<<l<<" ";
+        }
+        std::cout<<std::endl;
+    }
+
+    void printlocations() const {
+        std::cout << "Payload Details:" << std::endl;
+        for (size_t i = 0; i < locations.size(); ++i) {
+            std::cout << "Locations: " << std::endl;
+            for (const auto& location : locations[i]) {
+                std::cout << "(" << location.first << ", " << location.second << ")" << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+
+};
+
 class Drones{
     private:
     public:
@@ -128,12 +266,43 @@ void Drones::drones_creater(void){
 
     
 }
-void Drones::drone_status(void){
 
-}
 int main(){
-    std::vector<int> drones_list
-    
+
+    int payload_len = 5;
+    std::vector<int> payload_idx_= {0,5,1,2,3};
+    std::vector<int> payload_weight_ ={1,2,1,2,3};
+    std::vector<std::vector<std::pair<float, float>>> Locations_ = {
+        { {1.1, 0.1}},       
+        { {0.5, 0.6}},
+        { {0,0}},
+        { {-1,-1}},  
+        { {-0.6, 0.8}} 
+    };
+
+    //std::vector<std::pair<float, float>> newLocation = {{13,14},{2,3}};
+
+    Payload payloads;
+    std::vector<int> drones_list;
+    payloads.setLength(payload_len);
+    payloads.print_length();
+    payloads.setpayload_idx(payload_idx_);
+    payloads.printpayloads_idx();
+    payloads.setpayload_weight(payload_weight_);
+    payloads.printpayload_weight();
+    payloads.setLocations(Locations_);
+    //payloads.printlocations();
+
+    //payloads.editLocation(1, newLocation);
+    //payloads.printlocations();
+    payloads.modellocations();
+    payloads.printlocations();
+
+
+
+    Drone drone();
+
+
 
     
 
