@@ -1,5 +1,6 @@
 #include<iostream>
 #include<vector>
+#include<cmath>
 
 class Drone {
 private:
@@ -166,7 +167,7 @@ public:
             }
             else if(payload_list[i] == 3){
                 newlocation=split_3(location[i]);
-                std::cout<<locations[i][0].first<<std::endl; 
+                editLocation(i,newlocation);
             }
         }
         
@@ -188,7 +189,14 @@ public:
         float cy = location[0].second;
         float d = 0.3;
         //yet to do;
-         
+        float y1 = cy - (d)*cos(M_PI/6);
+        float x1 = cx - d/2;
+        float y2 = cy + (d)*cos(M_PI/6);
+        float x2 = cx - d/2;
+
+        std::vector<std::pair<float,float>> location_;
+        location_ = {{x1,y1},{x2,y2},{cx+d,cy}};
+        return location_;
     }
 
 
@@ -271,7 +279,7 @@ int main(){
 
     int payload_len = 5;
     std::vector<int> payload_idx_= {0,5,1,2,3};
-    std::vector<int> payload_weight_ ={1,2,1,2,3};
+    std::vector<int> payload_weight_ ={1,2,3,2,1};
     std::vector<std::vector<std::pair<float, float>>> Locations_ = {
         { {1.1, 0.1}},       
         { {0.5, 0.6}},
@@ -280,7 +288,8 @@ int main(){
         { {-0.6, 0.8}} 
     };
 
-    //std::vector<std::pair<float, float>> newLocation = {{13,14},{2,3}};
+    std::vector<std::vector<std::pair<float,float>>> final_locations;
+
 
     Payload payloads;
     std::vector<int> drones_list;
@@ -291,13 +300,8 @@ int main(){
     payloads.setpayload_weight(payload_weight_);
     payloads.printpayload_weight();
     payloads.setLocations(Locations_);
-    //payloads.printlocations();
-
-    //payloads.editLocation(1, newLocation);
-    //payloads.printlocations();
     payloads.modellocations();
     payloads.printlocations();
-
 
 
     Drone drone();
