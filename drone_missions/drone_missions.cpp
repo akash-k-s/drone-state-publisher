@@ -49,66 +49,145 @@ public:
 
 class Mission{
     private:
-
+    int mission_len;
+    std::vector<int> mission_idx;
+    int drones_len;
+    std::vector<std::vector<int>> drones_mission;
+    std::vector <int> status;
     public:
-    int payload_len = 5;
-    int payload_idx[5];
-    int drones_len = 4;
-    int drones_goals[5][4];
-    int status[5];
+    
 
-    // status = 0 not started
-    // status = 1 started
-    // status = 2 queued
-    // status = 3 completed
-    void initialize_status(void);
-    void missions_check(void);
-    void mission_start(void);
-};
-
-void Mission::initialize_status(void){
-    int len_ = Mission::payload_len;
-    for(int i=0; i<=len_; i++){
-        Mission::status [i] = 0;
+    // get fuctions
+    int getmission_len(){
+        return mission_len;
     }
-}
 
-void Mission::missions_check(void){
-    int len_ = Mission::payload_len;
-    int drones_len = Mission::drones_len;
-    for(int i=0 ; i<len_; i++){
-        if  (Mission::status[i]==0){
-            int check = 1;
-            for(int j=0; j<drones_len; j++){
-                if (Mission::drones_goals[i][j]==1){
+    std::vector<int> getmission_idx(void){
+        return mission_idx;
+    }
 
-                    // check if position is reached
-                        check=check*1;
-                    
-                    if(check==1){
-                        this->mission_start();
-                        Mission::status[i]=1;
+    int getdrones_len(void){
+        return drones_len;
+    }
+
+    std::vector<std::vector<int>> getdrones_missons( void ){
+        return drones_mission;
+    }
+
+    std::vector<int> getstatus (void){
+        return status;
+
+    }
+    //set functions
+     
+    void setmissions_len(int x){ mission_len = x;}
+
+    void setmission_idx(const std::vector<int>& payload_idx_) {
+        if(payload_idx_.size()==mission_len){
+            mission_idx = payload_idx_;
+        }
+        else{
+            std::cout<<"the lenght of the mision is not same as lenght of mission_idx "<<std::endl;
+        }
+
+    }
+
+    void setdrones_len(int x){
+        drones_len = x;
+    }
+
+    void setdrones_mission(const std::vector<std::vector<int>> x){
+        if(x.size() == mission_len && x[0].size() == drones_len){
+            drones_mission = x;
+        }
+        else{
+            std::cout<<" the matrix size is not same as drone lenght and payload lenght "<<std::endl;
+        }
+    }
+
+    void setstatus_list(){
+        status.clear();
+        for(int i=0 ;i<mission_len;i++){
+            status.push_back(0);
+            // status = 0 not started
+            // status = 1 started
+            // status = 2 queued
+            // status = 3 completed
+        }
+    }
+
+    //other methods
+
+    void print_mission_len(){
+        int x = this->getmission_len();
+        std::cout<<"mission lenght :" << mission_len << std::endl;
+    }
+
+    void print_mission_idx(){
+        std::cout<< "mission idx :";
+        std::vector<int> x = this-> getmission_idx();
+        for (const auto& l : x) {
+            std::cout << l << " ";
+        }
+        std::cout <<std::endl;
+    }
+
+    void print_dronelen(){
+        int x = this->getdrones_len();
+        std::cout<<"drone len: "<< x<< std::endl;
+    }
+
+    void print_drones_mission(){
+        std::cout<<"mission_drones: "<<std::endl;
+        for(int i=0; i<mission_len;i++){
+            for(int j=0; j<drones_len;j++){
+                std::cout<<drones_mission[i][j]<<" "; 
+            }
+            std::cout<<std::endl;
+        }
+    }
+    void print_status(){
+        std::cout<<"status :";
+        for(int i =0;i<mission_len;i++){
+            std::cout<<status[i]<<" ";
+        }
+        std::cout<<std::endl;
+    }
+
+    void misions_check(void){
+        int len_ = mission_len;
+        int drones_len_ = drones_len;
+        for (int i=0; i<len_;i++){
+            if(status[i]==0){
+                int check = 1;
+                for(int j=0; j<drones_len_; j++){
+                    if (drones_mission[i][j] == 1){
+                       //check if the drones have recahed the postion
+                        check = check*1;
+                        if (check ==1){
+                            this->mission_start();
+                            status[i]=1;
+                        }
                     }
 
                 }
             }
-        }
-
-        else if (Mission::status[i]==1){
-            for(int j=0; j<drones_len; j++){
-                if(Mission::drones_goals[i][j]==1){
-                    // drone j reached position
-                        Mission::status[i]=3;
+            else if(status[i] == 1){
+                for(int j =0; j<drones_len_;j++){
+                    if(drones_mission[i][j]==1){
+                        status[i]=3;
+                    } 
                 }
             }
-            
-        }
+        } 
     }
-}
 
-void Mission::mission_start(){
-    // add start 
-}
+    void mission_start(){
+        //add start
+    }
+
+};
+
 
 
 class Payload {
@@ -262,10 +341,10 @@ class Drones{
     void drones_creater(void);
     void drone_status(void);
 };
-
+/*
 void Drones::drones_creater(void){
     Mission mission;
-    Drones::drone_lenght = mission.drones_len;
+    Drones::drone_lenght = mission.getdrones_len();
     Drone *drones_list[Drones::drone_lenght];
      
     for(int i=0;i<Drones::drone_lenght;i++){
@@ -274,11 +353,12 @@ void Drones::drones_creater(void){
 
     
 }
+*/
 
 int main(){
 
     int payload_len = 5;
-    std::vector<int> payload_idx_= {0,5,1,2,3};
+    std::vector<int> payload_idx_= {0,4,1,2,3};
     std::vector<int> payload_weight_ ={1,2,3,2,1};
     std::vector<std::vector<std::pair<float, float>>> Locations_ = {
         { {1.1, 0.1}},       
@@ -294,17 +374,39 @@ int main(){
     Payload payloads;
     std::vector<int> drones_list;
     payloads.setLength(payload_len);
-    payloads.print_length();
+    //payloads.print_length();
     payloads.setpayload_idx(payload_idx_);
-    payloads.printpayloads_idx();
+    //payloads.printpayloads_idx();
     payloads.setpayload_weight(payload_weight_);
-    payloads.printpayload_weight();
+    //payloads.printpayload_weight();
     payloads.setLocations(Locations_);
     payloads.modellocations();
-    payloads.printlocations();
+    //payloads.printlocations();
 
 
-    Drone drone();
+    int drone_len = 4 ;
+    std::vector<std::vector<int>> mission_drones_list = {
+        {0,0,0,1},
+        {0,1,1,0},
+        {1,1,0,1},
+        {1,0,1,0},
+        {0,1,0,0}
+    } ;
+
+    Mission mission;
+    mission.setmissions_len(payload_len);
+    mission.print_mission_len();
+    mission.setmission_idx(payload_idx_);
+    mission.print_mission_idx();
+    mission.setdrones_len(drone_len);
+    mission.print_dronelen();
+    mission.setdrones_mission(mission_drones_list);
+    mission.print_drones_mission();
+    mission.setstatus_list();
+    mission.print_status();
+    
+
+
 
 
 
