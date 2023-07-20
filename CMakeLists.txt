@@ -8,26 +8,35 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(PYBIND11_PYTHON_VERSION 3.6)
 
 # Find dependencies
 find_package(ament_cmake_python REQUIRED)
+find_package(ament_cmake REQUIRED)
+set(x ../crazyflie_cpp/cmake/crazyflie_cpp-config.cmake)
+
 
 find_package(std_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-#find_package(pybind11 REQUIRED)
+find_package(pybind11 REQUIRED)
 
 # Add C++ executable
 add_executable(drone_missions src/drone_missions.cpp)
+#add_executable(drone_py src/drone_missions_py.cpp)
 
 
-message(STATUS "Pybind11 Include Directories: ${pybind11_INCLUDE_DIRS}")
+
+message(pybind11_FOUND)
 # Include directories
 include_directories(
-  include
+  #include
+  x
   ${pybind11_INCLUDE_DIRS}
+
+  
 )
 
 # Linking
@@ -39,18 +48,19 @@ ament_target_dependencies(drone_missions
 )
 
 # Add Pybind11 module
+pybind11_add_module(drone_missions_py src/drone_missions_py.cpp)
+
+# Link the drone_ws target with the crazyfile_cpp target
+
 #pybind11_add_module(drone_missions_py MODULE src/drone_missions.cpp)
 
-# Link Pybind11 module with dependencies
-#target_link_libraries(drone_missions_py PRIVATE
-#  rclcpp
-#  geometry_msgs
-#)
+target_include_directories(drone_missions PRIVATE   ${PYBIND11_INCLUDE_DIRS}/include ${CRAZYFILE_INCLUDE_DIRS}/include )
+
 
 # Install executables
 install(TARGETS
   drone_missions
-  #drone_missions_py
+  drone_missions_py
   DESTINATION lib/${PROJECT_NAME}
 )
 

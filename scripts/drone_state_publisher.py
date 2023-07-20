@@ -29,7 +29,7 @@ F = 'radio://0/100/2M/E7E7E7E707'  # F
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [N,V,F,Y,P]
+uris = [V]
 
 class MinimalPublisher(Node):
     
@@ -206,16 +206,20 @@ class MinimalPublisher(Node):
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
             swarm.parallel_safe(self.take_off)
-            self.setpoints_pickup_3(uris[0],uris[1],uris[2],0.5,0.5)
-            self.setpoints_pickup_2(uris[3],uris[4],-1,1)
+            #self.setpoints_pickup_3(uris[0],uris[1],uris[2],0.5,0.5)
+            #self.setpoints_pickup_2(uris[3],uris[4],-1,1)
             #self.setpoints_pickup_1(uris[0],1,1)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
-            #self.setpoints_pickup_1(uris[0],-1,1.4)
+            self.drone_1_waypoints = [[uris[0],-1,1],[uris[0],1,-1]]
+            #self.setpoints_pickup_1(self.drone_1_waypoints[0])
             #self.setpoints_pickup_1(uris[1],-1,-1)
             self.pickup_generator_creator()
+            #swarm.parallel_safe(self.land)
+
             while(1):
                 rclpy.spin_once(self)
+                self.setpoints_pickup_1(self.drone_1_waypoints[0])
                 #self.list1 = self.setpoints_splitter()
                 #print(self.list1)
                 self.pickup_generator()
@@ -227,6 +231,7 @@ class MinimalPublisher(Node):
                 #self.setpoints_pickup_1(uris[2])
                 #swarm.parallel_safe(self.land)
     
+
 
 
     def log_stab_callback(self,scf,timestamp, data, logconf):
@@ -345,7 +350,8 @@ class MinimalPublisher(Node):
                 self.seq_list[i]=[
                     (self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1],1,0,duration)
                 ]
-
+                self.drone_1_waypoints.pop(0)
+                self.pickup_complete_list.update({uris[i]:[0,0]})
                 """ update with new way point"""
             else:
                 self.seq_list[i]=[
@@ -451,10 +457,10 @@ class MinimalPublisher(Node):
         self.waypoint_data[uri_1]= [x1,y1]
         self.waypoint_data[uri_2]= [x2,y2] 
     
-    def setpoints_pickup_1(self,uri_1,cx,cy):
-        x=cx
-        y=cy
-        self.waypoint_data[uri_1]= [x,y]
+    def setpoints_pickup_1(self,data):
+        x=data[1]
+        y=data[2]
+        self.waypoint_data[data[0]]= [x,y]
 
     def reached_final_setpoint(self,drone_uri):
 
