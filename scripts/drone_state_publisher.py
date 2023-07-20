@@ -31,13 +31,19 @@ P = 'radio://0/100/2M/E7E7E7E704'
 
 uris = [V]
 
+drone = [[0,1],
+         [1,0],
+        [1,1]]
+        
+payload_idx = [2,0,1]
+mission_position = [[[1,2],[1,1.5]],[[-1,-1],[0,0]],[[1,1],[1,0]]]
+
 class MinimalPublisher(Node):
     
     global uris
-    #global Drone
-    global event
-    event = Event()
-    global lock
+    global drone
+    global payload_idx
+    global mission_position
     
 
 
@@ -197,33 +203,55 @@ class MinimalPublisher(Node):
     def reset(self):
         self.swarm_.reset_estimators()
 
+    def missions(self):
+        self.drone_planner=dict()
+        for i in range(len(uris)):
+            self.drone_planner({uris[i]:[[-1]]})
+        for i in range(len(payload_idx)):
+            for j in range(len(drone[i])):
+                if(drone[i][j]==1):
+                    x = self.drone_planner.get(uris[j])
+                    if(x[0][0]==-1):
+                        x = [[payload_idx[i]]]
+                    else:
+                        x.append([payload_idx[i]])
+                    self.drone_planner.update({uris[j]:x})
+            if(sum(drone[i])==2):
+                self.setpoints_pickup_2(payload_idx[i])
+            elif(sum(drone[i])==3):
+                self.setpoints_pickup_3(payload_idx[i])
+        
 
     def start(self):
         print("started")
+        self.missions()
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
             swarm.parallel_safe(self.take_off)
-            #self.setpoints_pickup_3(uris[0],uris[1],uris[2],0.5,0.5)
-            #self.setpoints_pickup_2(uris[3],uris[4],-1,1)
-            #self.setpoints_pickup_1(uris[0],1,1)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
-            self.drone_1_waypoints = [[uris[0],-1,1],[uris[0],1,-1]]
-            #self.setpoints_pickup_1(self.drone_1_waypoints[0])
-            #self.setpoints_pickup_1(uris[1],-1,-1)
             self.pickup_generator_creator()
-            #swarm.parallel_safe(self.land)
+            self.mission_logger = dict()
 
             while(1):
                 rclpy.spin_once(self)
-                self.setpoints_pickup_1(self.drone_1_waypoints[0])
-                #self.list1 = self.setpoints_splitter()
-                #print(self.list1)
                 self.pickup_generator()
-                #self.pick_up([uris[0],uris[1]])
+                for i in range(len(uris)):
+                    x = self.drone_planner.get(uris[i]) # total missions of queue of drone 
+                    y = x[0] # drones first mission
+
+                    """ to do from here check notes"""
+
+                    if(len(mission_position[y])==2):
+
+                        self.mission_logger.update({y:uris[i]})
+                        data=[uris[i],mission_position[y][0],mission_position[y][1]]
+                        self.setpoints_pickup_1(data)
+                        self.pick_up([uris[i]])
+                    
                 self.pick_up([uris[0]])
                 seq_=self.seq()
                 swarm.parallel_safe(self.run_sequence, args_dict=seq_)
@@ -427,12 +455,14 @@ class MinimalPublisher(Node):
 
 
 
-    def setpoints_pickup_3(self,uri_1,uri_2,uri_3,x,y):
+    def setpoints_pickup_3(self,payload_nu):
         distance=0.30 # in meters centroid to drone
         #cx=set_pts[i][0] # x setpoint
         #cy=set_pts[i][1] # y setpoint
-        cx=x
-        cy=y
+        data = self.mission_position[payload_nu][0]
+        final = self.mission_position[payload_nu][1]
+        cx=data[0]
+        cy=data[1]
         y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
         x1= cx-distance/2  # drone1 x
         y2= cy+(distance)*math.cos(math.pi/6) #drone2 y
@@ -441,21 +471,27 @@ class MinimalPublisher(Node):
         y3= cy #drone 3 y
         x3 = cx+distance # drone 3 x
         #yaw=0 # angle of drone
-        self.waypoint_data[uri_1]= [x1,y1]
-        self.waypoint_data[uri_2]= [x2,y2]
-        self.waypoint_data[uri_3]= [x3,y3]
+        data1 = [[x1,y1],[x2,y2],[x3,y3],final]
+        self.mission_position[payload_nu] = data1
+        #self.waypoint_data[uri_1]= [x1,y1]
+        #self.waypoint_data[uri_2]= [x2,y2]
+        #self.waypoint_data[uri_3]= [x3,y3]
 
-    def setpoints_pickup_2(self,uri_1,uri_2,x,y):
+    def setpoints_pickup_2(self,payload_nu):
         d=0.5 # distance in meters
-        cx=x #pickup coordinates in x
-        cy=y #pickup coordinates in y 
+        data = self.mission_position[payload_nu][0]
+        final =self.mission_position[payload_nu][1]
+        cx=data[0]
+        cy=data[1]
         x1=cx  # drone1 x
         x2=cx  # drone2 x
         y1=cy-d # drone1 y
         y2=cy+d # drone2 y
         yaw=0 # angle of drone
-        self.waypoint_data[uri_1]= [x1,y1]
-        self.waypoint_data[uri_2]= [x2,y2] 
+        data1 = [[x1,y1],[x2,y2],final]
+        self.mission_position[payload_nu]=data1
+        #self.waypoint_data[uri_1]= [x1,y1]
+        #self.waypoint_data[uri_2]= [x2,y2] 
     
     def setpoints_pickup_1(self,data):
         x=data[1]
