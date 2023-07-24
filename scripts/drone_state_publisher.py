@@ -350,12 +350,13 @@ class MinimalPublisher(Node):
         print("started")
         self.missions() # missions assigned to each drone
         self.missions_checker()
+        #self.mission_distance_checker()
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
-            #swarm.parallel_safe(self.take_off)
+            swarm.parallel_safe(self.take_off)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
             
@@ -364,8 +365,8 @@ class MinimalPublisher(Node):
                 rclpy.spin_once(self)
                 self.missions_checker()
                 self.mission_distance_checker()
-                #seq_=self.seq()
-                #swarm.parallel_safe(self.run_sequence, args_dict=seq_)
+                seq_=self.seq()
+                swarm.parallel_safe(self.run_sequence, args_dict=seq_)
 
                 #self.setpoints_pickup_1(uris[2])
                 #swarm.parallel_safe(self.land)
