@@ -94,7 +94,7 @@ class MinimalPublisher(Node):
         self.publisher_active.publish(self.drone_active_list)
 
         self.publisher_radii.publish(self.radius_list)
-        
+        #print(self.mission_logger)
         for i in range(len(payload_idx)):
             mission = self.mission_logger.get(payload_idx[i])
             if (mission[1][0]==4):
@@ -118,12 +118,13 @@ class MinimalPublisher(Node):
                     self.position_data_final.update({mission[0][2]:data})
             else:
                 for j in range(len(mission[0])):
-                    data = []
-                    data.append(self.position_data.get(mission[0][j]))[0]
-                    data.append(self.position_data.get(mission[0][j]))[1]
-                    data.append(self.position_data.get(mission[0][j]))[2]
-                    data.append(self.position_data.get(mission[0][j]))[3]
-                    self.position_data_final.update({mission[0][j]:data})
+                    #print(mission[0][j])
+                    if mission[0][j] == None:
+                        continue
+                    else:
+                        data = self.position_data.get(mission[0][j])
+                        self.position_data_final.update({mission[0][j]:data})
+                
 
         # go through each missions drones and publish data into a new list and new dict
         # and publish from there than from position_data.get 
@@ -243,9 +244,10 @@ class MinimalPublisher(Node):
         self.drone_planner=dict()
         self.mission_logger = dict()
         for i in range(len(uris)):
-            self.drone_planner({uris[i]:[[-1]]})
+            self.drone_planner.update({uris[i]:[[-1]]})
         for i in range(len(payload_idx)):
-            self.mission_logger({payload_idx[i]:[][-1]})
+            data=[[None],[-1]]
+            self.mission_logger.update({payload_idx[i]:data})
         for i in range(len(payload_idx)):
             for j in range(len(drone[i])):
                 if(drone[i][j]==1):
@@ -259,11 +261,15 @@ class MinimalPublisher(Node):
                 self.setpoints_pickup_2(payload_idx[i])
             elif(sum(drone[i])==3):
                 self.setpoints_pickup_3(payload_idx[i])
-
+        print("missions done")
+        print(self.drone_planner)
+        print(self.mission_logger)
+    
     def missions_checker(self):
         for i in range(len(uris)):
             total_mission = self.drone_planner.get(uris[i]) 
-            first_mission=total_mission[0][0]
+            first_mission = total_mission[0][0]
+
             if(len(mission_position[first_mission])==1):
                 mission = self.mission_logger.get(first_mission)
                 if(mission[1][0]==3):
@@ -342,24 +348,24 @@ class MinimalPublisher(Node):
 
     def start(self):
         print("started")
-        self.missions()
+        self.missions() # missions assigned to each drone
+        self.missions_checker()
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
-            swarm.parallel_safe(self.take_off)
+            #swarm.parallel_safe(self.take_off)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
             
 
             while(1):
                 rclpy.spin_once(self)
-                #self.pickup_generator()
                 self.missions_checker()
                 self.mission_distance_checker()
-                seq_=self.seq()
-                swarm.parallel_safe(self.run_sequence, args_dict=seq_)
+                #seq_=self.seq()
+                #swarm.parallel_safe(self.run_sequence, args_dict=seq_)
 
                 #self.setpoints_pickup_1(uris[2])
                 #swarm.parallel_safe(self.land)
@@ -697,8 +703,8 @@ class MinimalPublisher(Node):
         distance=0.30 # in meters centroid to drone
         #cx=set_pts[i][0] # x setpoint
         #cy=set_pts[i][1] # y setpoint
-        data = self.mission_position[payload_nu][0]
-        final = self.mission_position[payload_nu][1]
+        data = mission_position[payload_nu][0]
+        final = mission_position[payload_nu][1]
         cx=data[0]
         cy=data[1]
         y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
@@ -710,15 +716,15 @@ class MinimalPublisher(Node):
         x3 = cx+distance # drone 3 x
         #yaw=0 # angle of drone
         data1 = [[x3,y3],[x2,y2],[x1,y1],final]
-        self.mission_position[payload_nu] = data1
+        mission_position[payload_nu] = data1
         #self.waypoint_data[uri_1]= [x1,y1]
         #self.waypoint_data[uri_2]= [x2,y2]
         #self.waypoint_data[uri_3]= [x3,y3]
 
     def setpoints_pickup_2(self,payload_nu):
         d=0.5 # distance in meters
-        data = self.mission_position[payload_nu][0]
-        final =self.mission_position[payload_nu][1]
+        data = mission_position[payload_nu][0]
+        final = mission_position[payload_nu][1]
         cx=data[0]
         cy=data[1]
         x1=cx  # drone1 x
@@ -727,7 +733,7 @@ class MinimalPublisher(Node):
         y2=cy+d # drone2 y
         yaw=0 # angle of drone
         data1 = [[x1,y1],[x2,y2],final]
-        self.mission_position[payload_nu]=data1
+        mission_position[payload_nu]=data1
         #self.waypoint_data[uri_1]= [x1,y1]
         #self.waypoint_data[uri_2]= [x2,y2] 
     
