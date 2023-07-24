@@ -92,6 +92,10 @@ class MinimalPublisher(Node):
 
         self.publisher_radii.publish(self.radius_list)
         
+        #for i in range(len(self.mission_logger)):
+        # go through each missions drones and publish data into a new list and new dict
+        # and publish from there than from position_data.get 
+
         for i in range(self.number_drones):
             try:
                 self.float_list.data[i*4] = self.position_data.get(uris[i])[0]
@@ -232,15 +236,22 @@ class MinimalPublisher(Node):
                 mission = self.mission_logger.get(first_mission)
                 if(mission[1][0]==3):
                     if(len(mission[0])==2):
+                        mission[1][0]=4
+                        data = mission[0]
+                        drone_set_point = mission_position[first_mission][0]
+                        data.append(drone_set_point[0])
+                        data.append(drone_set_point[1])
+                        self.dropoff_2_waypoint(data)
                         #pickup 2 drones
+
                     elif(len(mission[0])==3):
                         data = mission[0]
                         #pickup 3 drones
-                        drone_set_point =mission_position[first_mission][0]
+                        drone_set_point = mission_position[first_mission][0]
                         data.append(drone_set_point[0])
                         data.append(drone_set_point[1])
                         mission[1][0]=4
-                        self.path_drones_3(data)
+                        self.dropoff_3_waypoint(data)
                         
                     elif(len(mission[0])==1):
                         drone_set_point = mission_position[first_mission][0]
@@ -464,28 +475,6 @@ class MinimalPublisher(Node):
                 self.mission_logger.update({i:mission})
                     # update way point
 
-
-        
-        for i in range(self.number_drones):
-            if(self.pickup_complete_list.get(uris[i])[1]==1):
-                    self.seq_list[i]=[
-                    (self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1],0.4,0,duration)
-                ]
-                    self.pickup_complete_list.update({uris[i]:[1,2]})
-                    print(self.pickup_complete_list)
-
-            elif(self.pickup_complete_list.get(uris[i])[1]==2):
-                self.seq_list[i]=[
-                    (self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1],1,0,duration)
-                ]
-                self.drone_1_waypoints.pop(0)
-                self.pickup_complete_list.update({uris[i]:[0,0]})
-                """ update with new way point"""
-            else:
-                self.seq_list[i]=[
-                    (setpoints_list[i][0][0],setpoints_list[i][0][1],1,0,duration)
-                ]
-
         seq_args = dict()
         for i in range(self.number_drones):
             seq_args.update({uris[i]:[self.seq_list[i]]})
@@ -510,7 +499,7 @@ class MinimalPublisher(Node):
             commander.go_to(x, y, z, yaw, duration, relative=False)
             time.sleep(1)
 
-    def path_drones_3(self,uri_1,uri_2,uri_3):
+    def path_drones_3(self,uri_1,uri_2,uri_3): # 
         y1 = self.position_data.get(uri_1)[1]
         x1 = self.position_data.get(uri_1)[0]
         y2 = self.position_data.get(uri_2)[1]
@@ -534,7 +523,38 @@ class MinimalPublisher(Node):
         cvy = (vy1 + vy2 + vy3)/3
 
         return [cx,cy,cvx,cvy]
+    
+    def path_drones_2(self,uri_1,uri_2):
+        y1 = self.position_data.get(uri_1)[1]
+        y2 = self.position_data.get(uri_2)[1]
 
+        x1 = self.position_data.get(uri_1)[0]
+        x2 = self.position_data.get(uri_2)[0]
+
+        vx1 = self.position_data.get(uri_1)[3]
+        vx2 = self.position_data.get(uri_2)[3]
+
+        vy1 = self.position_data.get(uri_1)[4]
+        vy2 = self.position_data.get(uri_2)[4]
+        
+        cx = (x1+x2)/2
+        cy = (y1+y2)/2
+        cvx = (vx1+vx2)/2
+        cvy = (vy1+vy2)/2
+
+        return [cx,cy,cvx,cvy]
+
+    def dropoff_2_waypoint(self,data):
+        distance = 0.5
+        cx = data[2]
+        cy = data[3]
+        x1=cx  # drone1 x
+        x2=cx  # drone2 x
+        y1=cy-distance # drone1 y
+        y2=cy+distance # drone2 y
+
+        self.waypoint_data[data[0]] = [x1,y1+distance]
+        self.waypoint_data[data[1]] = [x2,y2]
 
     def dropoff_3_waypoint(self,data):
         distance = 0.30
@@ -552,8 +572,6 @@ class MinimalPublisher(Node):
         self.waypoint_data[data[0]]= [x3-distance,y3]
         self.waypoint_data[data[1]]= [x2,y2]
         self.waypoint_data[data[2]]= [x1,y1]
-
-
 
     def setpoints_pickup_3(self,payload_nu):
         distance=0.30 # in meters centroid to drone
