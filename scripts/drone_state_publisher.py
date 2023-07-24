@@ -99,11 +99,7 @@ class MinimalPublisher(Node):
             mission = self.mission_logger.get(payload_idx[i])
             if (mission[1][0]==4):
                 if(len(mission[0])==1):
-                    data = []
-                    data.append(self.position_data.get(mission[0][0]))[0]
-                    data.append(self.position_data.get(mission[0][0]))[1]
-                    data.append(self.position_data.get(mission[0][0]))[2]
-                    data.append(self.position_data.get(mission[0][0]))[3]
+                    data = self.position_data.get(mission[0][0])
                     self.position_data_final.update({mission[0][0]:data})
                 elif(len(mission[0])==2):
                     data = []
