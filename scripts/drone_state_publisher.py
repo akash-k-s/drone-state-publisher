@@ -232,6 +232,9 @@ class MinimalPublisher(Node):
             print(self.path_found_list)
         return callback1
 
+    """
+    drones code
+    """
 
     def reset(self):
         self.swarm_.reset_estimators()
