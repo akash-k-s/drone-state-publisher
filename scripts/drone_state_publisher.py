@@ -29,14 +29,15 @@ F = 'radio://0/100/2M/E7E7E7E707'  # F
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [V,F]
+uris = [N,F]
 
-drone = [[0,1],
+drone = [[1,1],
          [1,0],
-        [1,1]]
+         [0,1],
+         [1,1]]
         
-payload_idx = [2,0,1]
-mission_position = [[[1,2],[1,1.5]],[[-1,-1],[0,0]],[[1,1],[1,0]]]
+payload_idx = [0,1,2,3]
+mission_position = [[[-1,-1],[0,0]],[[1,1],[1,0]],[[-1,1],[0.5,-0.5]],[[0.7,0.7],[1,-1]]]
 
 class MinimalPublisher(Node):
     
@@ -94,7 +95,7 @@ class MinimalPublisher(Node):
         self.publisher_active.publish(self.drone_active_list)
 
         self.publisher_radii.publish(self.radius_list)
-        #print(self.mission_logger)
+
         for i in range(len(payload_idx)):
             mission = self.mission_logger.get(payload_idx[i])
             if (mission[1][0]==4):
@@ -114,7 +115,6 @@ class MinimalPublisher(Node):
                     self.position_data_final.update({mission[0][2]:data})
             else:
                 for j in range(len(mission[0])):
-                    #print(mission[0][j])
                     if mission[0][j] == None:
                         continue
                     else:
@@ -270,6 +270,7 @@ class MinimalPublisher(Node):
                 mission = self.mission_logger.get(first_mission)
                 if(mission[1][0]==3):
                     if(len(mission[0])==2):
+                        print("starting 2 drones")
                         mission[1][0]=4
                         data = mission[0]
                         drone_set_point = mission_position[first_mission][0]
@@ -279,6 +280,7 @@ class MinimalPublisher(Node):
                         #pickup 2 drones
 
                     elif(len(mission[0])==3):
+                        print("starting 3 drones")
                         data = mission[0]
                         #pickup 3 drones
                         drone_set_point = mission_position[first_mission][0]
@@ -476,8 +478,14 @@ class MinimalPublisher(Node):
 
         for i in range(len(payload_idx)):
             mission = self.mission_logger.get(payload_idx[i])
-            
-            if(mission[1][0]==0):
+            print(f'mission status:{mission[1][0]}')
+
+            if(mission[1][0]==6):
+                continue
+            elif(mission[1][0]==-1):
+                continue
+            elif(mission[1][0]==0):
+                print("going to pickup")
                 for j in range(len(mission[0])):
                     index = uris.index(mission[0][j])
                     self.seq_list[index] = [
@@ -485,22 +493,28 @@ class MinimalPublisher(Node):
                     ]
 
             elif(mission[1][0]==1):
-                for j in range(len(mission[0])):
+                print("picking up")
+                for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],0.4,0,duration)
                     ]
-                    self.drone_active_list.data[index]=0
+                    if j==0:
+                        index_0 = index
+                        self.drone_active_list.data[index] = 1
+                    else:
+                        self.drone_active_list.data[index] = 0   
+                
+                if len(mission[0]) == 2:
+                    self.radius_list.data[index_0] = 0.275
+                elif len(mission[0]) == 3:
+                    self.radius_list.data[index_0] = 0.4
+
                 mission[1][0]=2
                 self.mission_logger.update({i:mission})
-                index = uris.index(mission[0][0])
-                self.drone_active_list.data[index] = 1
-                if len(mission[0]==2):
-                    self.radius_list.data[index] = 0.275
-                elif len(mission[0]==3):
-                    self.radius_list.data[index] = 0.4
 
             elif(mission[1][0]==2):
+                print("pickup done")
                 for j in range(len(mission[0])):
                     index = uris.index(mission[0][j])
                     self.seq_list[index] = [
@@ -510,6 +524,7 @@ class MinimalPublisher(Node):
                 self.mission_logger.update({i:mission})
                     # update way point
             elif(mission[1][0]==4):
+                print("going to waypoint")
                 if(len(mission[0])==1):
                     index = uris.index(mission[0][0])
                     self.seq_list[index] = [
@@ -519,6 +534,7 @@ class MinimalPublisher(Node):
                     index  = uris.index(mission[0][0])
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][0]]
                     final_xy = self.path_follower_2(data)
+                    print(final_xy)
                     self.seq_list[index] = [
                         (final_xy[0], final_xy[1],1,0,duration)
                     ]
@@ -530,6 +546,7 @@ class MinimalPublisher(Node):
                     index  = uris.index(mission[0][0])
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][0]]
                     final_xy = self.path_follower_3(data)
+                    print(final_xy)
                     self.seq_list[index] = [
                         (final_xy[0], final_xy[1],1,0,duration)
                     ]
@@ -542,7 +559,8 @@ class MinimalPublisher(Node):
                         (final_xy[4],final_xy[5],1,0,duration)
                     ]
             elif(mission[1][0]==5):
-                mission[1][0]=0
+                print("drop done")
+                mission[1][0] = 6
                 self.mission_logger.update({i:mission})
                 if(len(mission[0])==1):
                     index = uris.index(mission[0][0])
@@ -589,13 +607,14 @@ class MinimalPublisher(Node):
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
                 
-                poped_element = payload_idx.pop(i)
+                poped_element = payload_idx[i]
                 # mission_position.pop(i)
                 for  j in range(len(drone[poped_element])):
                     if drone[poped_element][j]==1:
                         drone_mission = self.drone_planner.get(uris[j])
                         drone_mission.pop(0)
-                        self.drone_planner({uris[j]:drone_mission})
+                        self.drone_planner.update({uris[j]:drone_mission})
+                    
 
 
         seq_args = dict()
@@ -787,8 +806,11 @@ class MinimalPublisher(Node):
             check = 1
             if mission[1][0]==0:
                 for j in range(len(mission[0])):
-                    temp = self.reached_final_setpoint(j)
-                    check = check*temp
+                    if mission[0][j] == None:
+                        continue
+                    else:  
+                        temp = self.reached_final_setpoint(mission[0][j])
+                        check = check*temp
                 if check == 1:
                     mission[1][0]=1
                     #index = uris.index(mission[0][j])
