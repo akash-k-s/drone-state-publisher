@@ -29,11 +29,11 @@ F = 'radio://0/100/2M/E7E7E7E707'  # F
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [Y,F]
+uris = [F,N]
 
-drone = [[1,1],
+drone = [[0,1],
          [1,0],
-         [0,1],
+         [1,1],
          [1,1]]
         
 payload_idx = [0,1,2,3]
@@ -591,7 +591,7 @@ class MinimalPublisher(Node):
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
-                   
+                """   
                 elif(len(mission[0])==3):
                     index = uris.index(mission[0][0])
                     x = self.waypoint_data.get(uris[index])[0]
@@ -614,6 +614,8 @@ class MinimalPublisher(Node):
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
+                """
+
 
                 poped_element = payload_idx[i]
                 # mission_position.pop(i)
@@ -834,11 +836,12 @@ class MinimalPublisher(Node):
                 elif(len(mission[0])==4):
                     if(self.reached_final_setpoint(mission[0][1])==1):
                         mission[1][0] = 5
-
+                """
                 elif(len(mission[0])==3):
                     temp =(self.reached_final_setpoint(mission[0][1]))*(self.reached_final_setpoint(mission[0][2]))
                     if temp==1:
                         mission[1][0] = 5
+                """
 
                 
             self.mission_logger.update({payload_idx[i]:mission})
