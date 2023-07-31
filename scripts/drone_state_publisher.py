@@ -37,7 +37,7 @@ drone = [[0,1],
          [1,1]]
         
 payload_idx = [0,1,2,3]
-mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0.3,-0.7]],[[0.7,0.7],[1,-1]]]
+mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0.3,0.7]],[[0.7,0.7],[1,-1]]]
 
 distance_2 = 0.5
 distance_3 = 0.3
@@ -108,10 +108,11 @@ class MinimalPublisher(Node):
                     self.position_data_final.update({mission[0][0]:data})
                 elif(len(mission[0])==4):
                     data = []
-                    data = self.path_drones_2()
+                    data = self.path_drones_2(mission[0][0],mission[0][1])
                     self.position_data_final.update({mission[0][0]:data})
-                    data = self.position_data.get(mission[0][1])
+                    #data = self.position_data.get(mission[0][1])
                     self.position_data_final.update({mission[0][1]:data})
+                """    
                 elif(len(mission[0])==3):
                     data = []
                     data = self.path_drones_3()
@@ -120,6 +121,7 @@ class MinimalPublisher(Node):
                     self.position_data_final.update({mission[0][1]:data})
                     data = self.position_data.get(mission[0][2])
                     self.position_data_final.update({mission[0][2]:data})
+                """
             else:
                 for j in range(len(mission[0])):
                     if mission[0][j] == None:
@@ -443,7 +445,7 @@ class MinimalPublisher(Node):
         results_list = []
 
         for i in range(self.number_drones):
-            results_list.append([[self.position_data.get(uris[i])[0],self.position_data.get(uris[i])[1]]])
+            results_list.append([[self.position_data_final.get(uris[i])[0],self.position_data_final.get(uris[i])[1]]])
         print(f'result{results_list}')
 
         for i in range(self.number_drones):
@@ -464,7 +466,7 @@ class MinimalPublisher(Node):
                             results_list[i]=[[set_pts[j][0],set_pts[j][1]]]
                             index=j
                             update=1
-                    elif(len(set_pts)==2):
+                    if(len(set_pts)<4):
                         index = len(set_pts)-1
                 if(index==len(set_pts)-1):
                     
@@ -547,10 +549,12 @@ class MinimalPublisher(Node):
                         (setpoints_list[index][0][0],setpoints_list[index][0][1],1,0,duration)
                     ]
                 
-                elif(len(mission[0])==2):
+                elif(len(mission[0])==4):
                     index  = uris.index(mission[0][0])
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][0]]
                     final_xy = self.path_follower_2(data)
+                    print(data)
+                    print(final_xy)
                     self.seq_list[index] = [
                         (final_xy[0], final_xy[1],1,0,duration)
                     ]
@@ -669,13 +673,13 @@ class MinimalPublisher(Node):
         x3 = self.position_data.get(uri_3)[0]
 
 
-        vx1 = self.position_data.get(uri_1)[3]
-        vx2 = self.position_data.get(uri_2)[3]
-        vx3 = self.position_data.get(uri_3)[3]
+        vx1 = self.position_data.get(uri_1)[2]
+        vx2 = self.position_data.get(uri_2)[2]
+        vx3 = self.position_data.get(uri_3)[2]
 
-        vy1 = self.position_data.get(uri_1)[4]
-        vy2 = self.position_data.get(uri_2)[4]
-        vy3 = self.position_data.get(uri_3)[4]
+        vy1 = self.position_data.get(uri_1)[3]
+        vy2 = self.position_data.get(uri_2)[3]
+        vy3 = self.position_data.get(uri_3)[3]
 
         cx = (x1+x2+x3)/3
         cy = (y1+y2+y3)/3
@@ -692,11 +696,11 @@ class MinimalPublisher(Node):
         x1 = self.position_data.get(uri_1)[0]
         x2 = self.position_data.get(uri_2)[0]
 
-        vx1 = self.position_data.get(uri_1)[3]
-        vx2 = self.position_data.get(uri_2)[3]
+        vx1 = self.position_data.get(uri_1)[2]
+        vx2 = self.position_data.get(uri_2)[2]
 
-        vy1 = self.position_data.get(uri_1)[4]
-        vy2 = self.position_data.get(uri_2)[4]
+        vy1 = self.position_data.get(uri_1)[3]
+        vy2 = self.position_data.get(uri_2)[3]
         
         cx = (x1+x2)/2
         cy = (y1+y2)/2
@@ -709,13 +713,9 @@ class MinimalPublisher(Node):
         distance = distance_2
         cx = data[2]
         cy = data[3]
-        x1=cx  # drone1 x
-        x2=cx  # drone2 x
-        y1=cy-distance # drone1 y
-        y2=cy+distance # drone2 y
 
-        self.waypoint_data[data[0]] = [x1,y1+distance]
-        self.waypoint_data[data[1]] = [x2,y2]
+        self.waypoint_data[data[0]] = [cx,cy]
+        self.waypoint_data[data[1]] = [cx,cy]
 
     def dropoff_3_waypoint(self,data):
         distance = 0.30
@@ -780,7 +780,7 @@ class MinimalPublisher(Node):
     def path_follower_2(self,data):
         cx = data[0]
         cy = data[1] 
-        distance = 0.5
+        distance = distance_2
         x1=cx  # drone1 x
         x2=cx  # drone2 x
         y1=cy-distance # drone1 y
@@ -805,14 +805,14 @@ class MinimalPublisher(Node):
         return final_xy
     
     def reached_final_setpoint(self,drone_uri):
-        print(drone_uri)
+        
         allowed_distance = 0.15
         
-        current_position_drone_x = self.position_data.get(drone_uri)[0]
-        current_position_drone_y = self.position_data.get(drone_uri)[1]
+        current_position_drone_x = self.position_data_final.get(drone_uri)[0]
+        current_position_drone_y = self.position_data_final.get(drone_uri)[1]
 
         distance_to_setpoint = math.sqrt((current_position_drone_x-self.waypoint_data[drone_uri][0])**2 +(current_position_drone_y-self.waypoint_data[drone_uri][1])**2)
-        print(distance_to_setpoint)
+        print(f'distnace is {drone_uri} : {distance_to_setpoint} : {current_position_drone_x,current_position_drone_y}')
         if distance_to_setpoint <= allowed_distance:
             drone_reached = 1
         else:
@@ -839,11 +839,12 @@ class MinimalPublisher(Node):
             print(mission[0])
             if mission[1][0]==4:
                 if(len(mission[0])==1):
-                    if(self.reached_final_setpoint(mission[0][0])==1):
+                    if(self.reached_final_setpoint(mission[0][0])==1 ):
                         mission[1][0] = 5   
 
                 elif(len(mission[0])==4):
-                    if(self.reached_final_setpoint(mission[0][1])==1 ):
+                    if(self.reached_final_setpoint(mission[0][0])==1 or self.reached_final_setpoint(mission[0][1])==1):
+                        
                         mission[1][0] = 5
                 """
                 elif(len(mission[0])==3):
