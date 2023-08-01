@@ -275,94 +275,98 @@ class MinimalPublisher(Node):
         print(self.mission_logger)
     
     def missions_checker(self):
+        self.drones_complete = 0
         for i in range(len(uris)):
             total_mission = self.drone_planner.get(uris[i]) 
-            first_mission = total_mission[0][0]
 
-            if(len(mission_position[first_mission])==1):
-                mission = self.mission_logger.get(first_mission)
-                if(mission[1][0]==3):
-                    if(len(mission[0])==2):
-                        print("starting 2 drones")
-                        mission[1][0]=4
-                        data = mission[0]
-                        drone_set_point = mission_position[first_mission][0]
-                        data.append(drone_set_point[0])
-                        data.append(drone_set_point[1])
-                        print(data)
-                        self.dropoff_2_waypoint(data)
-                        #pickup 2 drones
+            if(len(total_mission)==0):
+                self.drones_complete += 1 
+    
+            else:   
+                first_mission = total_mission[0][0]
+                if(len(mission_position[first_mission])==1):
+                    mission = self.mission_logger.get(first_mission)
+                    if(mission[1][0]==3):
+                        if(len(mission[0])==2):
+                            print("starting 2 drones")
+                            mission[1][0]=4
+                            data = mission[0]
+                            drone_set_point = mission_position[first_mission][0]
+                            data.append(drone_set_point[0])
+                            data.append(drone_set_point[1])
+                            print(data)
+                            self.dropoff_2_waypoint(data)
+                            #pickup 2 drones
 
-                    elif(len(mission[0])==3):
-                        print("starting 3 drones")
-                        data = mission[0]
-                        #pickup 3 drones
-                        drone_set_point = mission_position[first_mission][0]
-                        data.append(drone_set_point[0])
-                        data.append(drone_set_point[1])
-                        mission[1][0]=4
-                        self.dropoff_3_waypoint(data)
-                        
-                    elif(len(mission[0])==1):
-                        drone_set_point = mission_position[first_mission][0]
+                        elif(len(mission[0])==3):
+                            print("starting 3 drones")
+                            data = mission[0]
+                            #pickup 3 drones
+                            drone_set_point = mission_position[first_mission][0]
+                            data.append(drone_set_point[0])
+                            data.append(drone_set_point[1])
+                            mission[1][0]=4
+                            self.dropoff_3_waypoint(data)
+
+                        elif(len(mission[0])==1):
+                            drone_set_point = mission_position[first_mission][0]
+                            data = [uris[i],drone_set_point[0],drone_set_point[1]]
+                            self.setpoints_pickup_1(data)
+                            mission[1][0]=4
+                        self.mission_logger.update({first_mission:mission})    
+
+                elif(len(mission_position[first_mission])==2):
+                    mission_data = self.mission_logger.get(first_mission)
+                    drones_used = mission_data[0]
+                    mission_logger_status = mission_data[1]
+                    if drones_used[0] == None:
+                        drones_used = uris[i]
+                        mission_logger_status = [0]
+                        self.mission_logger.update({first_mission:[[drones_used],mission_logger_status]})
+                        drone_set_point=mission_position[first_mission][0]
                         data = [uris[i],drone_set_point[0],drone_set_point[1]]
                         self.setpoints_pickup_1(data)
-                        mission[1][0]=4
-                    self.mission_logger.update({first_mission:mission})    
-                
-            elif(len(mission_position[first_mission])==2):
-                mission_data = self.mission_logger.get(first_mission)
-                drones_used = mission_data[0]
-                mission_logger_status = mission_data[1]
-                if drones_used[0] == None:
-                    drones_used = uris[i]
-                    mission_logger_status = [0]
-                    self.mission_logger.update({first_mission:[[drones_used],mission_logger_status]})
-                    drone_set_point=mission_position[first_mission][0]
-                    data = [uris[i],drone_set_point[0],drone_set_point[1]]
-                    self.setpoints_pickup_1(data)
-                    mission_position[first_mission].pop(0)
+                        mission_position[first_mission].pop(0)
 
-                elif uris[i] in drones_used:
-                    continue
+                    elif uris[i] in drones_used:
+                        continue
+                    else:
+                        drones_used.append(uris[i])
+                        mission_logger_status = [0]
+                        self.mission_logger.update({first_mission:[drones_used,mission_logger_status]})
+                        drone_set_point=mission_position[first_mission][0]
+                        data = [uris[i],drone_set_point[0],drone_set_point[1]]
+                        self.setpoints_pickup_1(data) 
+                        mission_position[first_mission].pop(0)
+
                 else:
-                    drones_used.append(uris[i])
-                    mission_logger_status = [0]
-                    self.mission_logger.update({first_mission:[drones_used,mission_logger_status]})
-                    drone_set_point=mission_position[first_mission][0]
-                    data = [uris[i],drone_set_point[0],drone_set_point[1]]
-                    self.setpoints_pickup_1(data) 
-                    mission_position[first_mission].pop(0)
+                    mission_data = self.mission_logger.get(first_mission)
+                    drones_used = mission_data[0]
+                    mission_logger_status = mission_data[1]
+                    if drones_used[0] == None:
+                        drones_used = uris[i]
+                        self.mission_logger.update({first_mission:[[drones_used],mission_logger_status]})
+                        drone_set_point=mission_position[first_mission][0]
+                        data = [uris[i],drone_set_point[0],drone_set_point[1]]
+                        self.setpoints_pickup_1(data)
+                        #print(mission_position[first_mission])
+                        mission_position[first_mission].pop(0)
 
-            else:
-                mission_data = self.mission_logger.get(first_mission)
-                drones_used = mission_data[0]
-                mission_logger_status = mission_data[1]
-                if drones_used[0] == None:
-                    drones_used = uris[i]
-                    self.mission_logger.update({first_mission:[[drones_used],mission_logger_status]})
-                    drone_set_point=mission_position[first_mission][0]
-                    data = [uris[i],drone_set_point[0],drone_set_point[1]]
-                    self.setpoints_pickup_1(data)
-                    #print(mission_position[first_mission])
-                    mission_position[first_mission].pop(0)
+                    elif uris[i] in drones_used:
+                        continue
+                    else:
+                        drones_used.append(uris[i])
+                        self.mission_logger.update({first_mission:[drones_used,mission_logger_status]})
+                        drone_set_point=mission_position[first_mission][0]
+                        data = [uris[i],drone_set_point[0],drone_set_point[1]]
+                        self.setpoints_pickup_1(data) 
+                        mission_position[first_mission].pop(0)
 
-                elif uris[i] in drones_used:
-                    continue
-                else:
-                    drones_used.append(uris[i])
-                    self.mission_logger.update({first_mission:[drones_used,mission_logger_status]})
-                    drone_set_point=mission_position[first_mission][0]
-                    data = [uris[i],drone_set_point[0],drone_set_point[1]]
-                    self.setpoints_pickup_1(data) 
-                    mission_position[first_mission].pop(0)
-            
 
     def start(self):
         print("started")
         self.missions() # missions assigned to each drone
         self.missions_checker()
-        #self.mission_distance_checker()
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
@@ -372,16 +376,17 @@ class MinimalPublisher(Node):
             self.pickup_complete_list = dict()
             self.seq_list_creator()
             
-
-            while(1):
+            data = True
+            while(data):
                 rclpy.spin_once(self)
                 self.missions_checker()
+                print(f'total drones completed mission: {self.drones_complete}')
+                if(self.drones_complete==len(uris)):
+                    data = False
                 self.mission_distance_checker()
                 seq_=self.seq()
                 swarm.parallel_safe(self.run_sequence, args_dict=seq_)
-
-                #self.setpoints_pickup_1(uris[2])
-                #swarm.parallel_safe(self.land)
+            swarm.parallel_safe(self.land)
     
 
 
@@ -858,7 +863,7 @@ class MinimalPublisher(Node):
                 
             self.mission_logger.update({payload_idx[i]:mission})
                   
-
+"""
     def pickup_generator_creator(self):
 
         for i in range(len(uris)):
@@ -870,7 +875,7 @@ class MinimalPublisher(Node):
         for i in range(len(uris)):
             temp = self.pickup_complete_list.get(uris[i])[1]
             self.pickup_complete_list.update({uris[i]:[self.reached_final_setpoint(uris[i]),temp]})
-
+"""
                         
 def main(args=None):
     rclpy.init(args=args)
