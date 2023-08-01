@@ -29,19 +29,17 @@ F = 'radio://0/100/2M/E7E7E7E707'  # F
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [F,N]
+uris = [V,N]
 
 drone = [[0,1],
          [1,0],
-         [1,1],
-         [0,1],
-         [1,0]]
+         [1,1]]
         
-payload_idx = [0,1,2,3,4]
-mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0,-1]],[[0,0],[1,-1]],[[-1,1],[-0.5,-0.5]]]
+payload_idx = [0,1,2]
+mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0,-1]]]
 
-distance_2 = 0.5
-distance_3 = 0.3
+distance_2 = 0.195
+distance_3 = 0.5
 class MinimalPublisher(Node):
     
     global uris
@@ -574,6 +572,7 @@ class MinimalPublisher(Node):
                     index  = uris.index(mission[0][0])
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][1]]
                     final_xy = self.path_follower_3(data)
+                    print(data)
                     print(final_xy)
                     self.seq_list[index] = [
                         (final_xy[0], final_xy[1],1,0,duration)
@@ -611,7 +610,7 @@ class MinimalPublisher(Node):
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
-                """   
+                  
                 elif(len(mission[0])==3):
                     index = uris.index(mission[0][0])
                     x = self.waypoint_data.get(uris[index])[0]
@@ -634,7 +633,7 @@ class MinimalPublisher(Node):
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
-                """
+                
 
 
                 poped_element = payload_idx[i]
@@ -725,9 +724,10 @@ class MinimalPublisher(Node):
         self.waypoint_data[data[1]] = [cx,cy]
 
     def dropoff_3_waypoint(self,data):
-        distance = 0.30
+        #distance = 0.30
         cx=data[3]
         cy=data[4]
+        """
         y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
         x1= cx-distance/2  # drone1 x
         y2= cy+(distance)*math.cos(math.pi/6) #drone2 y
@@ -737,12 +737,13 @@ class MinimalPublisher(Node):
         x3 = cx+distance
         y3= cy #drone 3 y
         x3 = cx # drone 3 x
-        self.waypoint_data[data[0]]= [x3-distance,y3]
-        self.waypoint_data[data[1]]= [x2,y2]
-        self.waypoint_data[data[2]]= [x1,y1]
+        """
+        self.waypoint_data[data[0]]= [cx,cy]
+        self.waypoint_data[data[1]]= [cx,cy]
+        self.waypoint_data[data[2]]= [cx,cy]
 
     def setpoints_pickup_3(self,payload_nu):
-        distance=0.30 # in meters centroid to drone
+        distance=distance_3 # in meters centroid to drone
         #cx=set_pts[i][0] # x setpoint
         #cy=set_pts[i][1] # y setpoint
         data = mission_position[payload_nu][0]
@@ -764,7 +765,7 @@ class MinimalPublisher(Node):
         #self.waypoint_data[uri_3]= [x3,y3]
 
     def setpoints_pickup_2(self,payload_nu):
-        d=0.5 # distance in meters
+        d=distance_2 # distance in meters
         data = mission_position[payload_nu][0]
         final = mission_position[payload_nu][1]
         cx=data[0]
@@ -776,8 +777,6 @@ class MinimalPublisher(Node):
         yaw=0 # angle of drone
         data1 = [[x1,y1],[x2,y2],final]
         mission_position[payload_nu]=data1
-        #self.waypoint_data[uri_1]= [x1,y1]
-        #self.waypoint_data[uri_2]= [x2,y2] 
     
     def setpoints_pickup_1(self,data):
         x=data[1]
@@ -796,7 +795,7 @@ class MinimalPublisher(Node):
         return final_xy
     
     def path_follower_3(self,data):
-        distance = 0.30
+        distance = distance_3
         cx=data[0]
         cy=data[1]
         y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
@@ -806,9 +805,7 @@ class MinimalPublisher(Node):
 
         y3= cy #drone 3 y
         x3 = cx+distance
-        y3= cy #drone 3 y
-        x3 = cx # drone 3 x
-        final_xy = [x1,y1,x2,y2,y3]
+        final_xy = [x1,y1,x2,y2,x3,y3]
         return final_xy
     
     def reached_final_setpoint(self,drone_uri):
@@ -853,29 +850,17 @@ class MinimalPublisher(Node):
                     if(self.reached_final_setpoint(mission[0][0])==1 or self.reached_final_setpoint(mission[0][1])==1):
                         
                         mission[1][0] = 5
-                """
-                elif(len(mission[0])==3):
+                
+                elif(len(mission[0])==5):
                     temp =(self.reached_final_setpoint(mission[0][1]))*(self.reached_final_setpoint(mission[0][2]))
                     if temp==1:
                         mission[1][0] = 5
-                """
+                
 
                 
             self.mission_logger.update({payload_idx[i]:mission})
-                  
-"""
-    def pickup_generator_creator(self):
 
-        for i in range(len(uris)):
-            self.pickup_complete_list.update({uris[i]:[0,0]})
-        print(self.pickup_complete_list)
 
-    def pickup_generator(self):
-
-        for i in range(len(uris)):
-            temp = self.pickup_complete_list.get(uris[i])[1]
-            self.pickup_complete_list.update({uris[i]:[self.reached_final_setpoint(uris[i]),temp]})
-"""
                         
 def main(args=None):
     rclpy.init(args=args)
