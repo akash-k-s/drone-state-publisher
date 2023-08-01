@@ -34,10 +34,11 @@ uris = [F,N]
 drone = [[0,1],
          [1,0],
          [1,1],
-         [1,1]]
+         [0,1],
+         [1,0]]
         
-payload_idx = [0,1,2,3]
-mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0.3,0.7]],[[0.7,0.7],[1,-1]]]
+payload_idx = [0,1,2,3,4]
+mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0,-1]],[[0,0],[1,-1]],[[-1,1],[-0.5,-0.5]]]
 
 distance_2 = 0.5
 distance_3 = 0.3
@@ -466,14 +467,15 @@ class MinimalPublisher(Node):
                             results_list[i]=[[set_pts[j][0],set_pts[j][1]]]
                             index=j
                             update=1
-                    if(len(set_pts)<4):
+                    if(len(set_pts)==2):
                         index = len(set_pts)-1
                 if(index==len(set_pts)-1):
-                    
                     results_list[i]=[[self.waypoint_data.get(uris[i])[0],self.waypoint_data.get(uris[i])[1]]]
+                    print("adding final way point")
                 elif update==1:
                     print(index,len(set_pts))
                     results_list[i]=[[set_pts[index+1][0],set_pts[index+1][1]]]
+                    print("adding final way point")
                 
         print(f'updated list{results_list}')
         return results_list
@@ -551,7 +553,7 @@ class MinimalPublisher(Node):
                 
                 elif(len(mission[0])==4):
                     index  = uris.index(mission[0][0])
-                    data = [setpoints_list[index][0][0],setpoints_list[index][0][0]]
+                    data = [setpoints_list[index][0][0],setpoints_list[index][0][1]]
                     final_xy = self.path_follower_2(data)
                     print(data)
                     print(final_xy)
@@ -565,7 +567,7 @@ class MinimalPublisher(Node):
                 
                 elif(len(mission[0])==5):
                     index  = uris.index(mission[0][0])
-                    data = [setpoints_list[index][0][0],setpoints_list[index][0][0]]
+                    data = [setpoints_list[index][0][0],setpoints_list[index][0][1]]
                     final_xy = self.path_follower_3(data)
                     print(final_xy)
                     self.seq_list[index] = [
