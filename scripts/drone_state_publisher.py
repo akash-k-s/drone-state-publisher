@@ -29,16 +29,16 @@ F = 'radio://0/100/2M/E7E7E7E707'  # F
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [V,N]
+uris = [Y,N,F]
 
-drone = [[0,1],
-         [1,0],
-         [1,1]]
+drone = [[0,1,0],
+         [1,0,1],
+         [1,1,1]]
         
 payload_idx = [0,1,2]
 mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0,-1]]]
 
-distance_2 = 0.195
+distance_2 = 0.5
 distance_3 = 0.5
 class MinimalPublisher(Node):
     
@@ -101,7 +101,7 @@ class MinimalPublisher(Node):
             mission = self.mission_logger.get(payload_idx[i])
             """ check mission len once and published data"""
             if (mission[1][0]==4):
-                print(mission)
+
                 if(len(mission[0])==1):
                     data = self.position_data.get(mission[0][0])
                     self.position_data_final.update({mission[0][0]:data})
@@ -111,16 +111,16 @@ class MinimalPublisher(Node):
                     self.position_data_final.update({mission[0][0]:data})
                     #data = self.position_data.get(mission[0][1])
                     self.position_data_final.update({mission[0][1]:data})
-                """    
-                elif(len(mission[0])==3):
+                  
+                elif(len(mission[0])==5):
                     data = []
-                    data = self.path_drones_3()
+                    data = self.path_drones_3(mission[0][0],mission[0][1],mission[0][2])
                     self.position_data_final.update({mission[0][0]:data})
-                    data = self.position_data.get(mission[0][1])
+                    #data = self.position_data.get(mission[0][1])
                     self.position_data_final.update({mission[0][1]:data})
-                    data = self.position_data.get(mission[0][2])
+                    #data = self.position_data.get(mission[0][2])
                     self.position_data_final.update({mission[0][2]:data})
-                """
+
             else:
                 for j in range(len(mission[0])):
                     if mission[0][j] == None:
@@ -569,6 +569,7 @@ class MinimalPublisher(Node):
                     ]
                 
                 elif(len(mission[0])==5):
+
                     index  = uris.index(mission[0][0])
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][1]]
                     final_xy = self.path_follower_3(data)
@@ -748,17 +749,16 @@ class MinimalPublisher(Node):
         #cy=set_pts[i][1] # y setpoint
         data = mission_position[payload_nu][0]
         final = mission_position[payload_nu][1]
-        cx=data[0]
-        cy=data[1]
-        y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
-        x1= cx-distance/2  # drone1 x
-        y2= cy+(distance)*math.cos(math.pi/6) #drone2 y
-        x2= cx-distance/2 #drone2 x
-
+        cx = data[0]
+        cy = data[1]
+        y1 = cy-(distance)*math.cos(math.pi/6) #drone1 y
+        x1 = cx-distance/2  # drone1 x
+        y2 = cy+(distance)*math.cos(math.pi/6) #drone2 y
+        x2 = cx-distance/2 #drone2 x
         y3= cy #drone 3 y
         x3 = cx+distance # drone 3 x
         #yaw=0 # angle of drone
-        data1 = [[x3,y3],[x2,y2],[x1,y1],final]
+        data1 = [[x1,y1],[x2,y2],[x3,y3],final]
         mission_position[payload_nu] = data1
         #self.waypoint_data[uri_1]= [x1,y1]
         #self.waypoint_data[uri_2]= [x2,y2]
@@ -796,14 +796,14 @@ class MinimalPublisher(Node):
     
     def path_follower_3(self,data):
         distance = distance_3
-        cx=data[0]
-        cy=data[1]
-        y1= cy-(distance)*math.cos(math.pi/6) #drone1 y
-        x1= cx-distance/2  # drone1 x
-        y2= cy+(distance)*math.cos(math.pi/6) #drone2 y
-        x2= cx-distance/2 #drone2 x
+        cx = data[0]
+        cy = data[1]
+        y1 = cy-(distance)*math.cos(math.pi/6) #drone1 y
+        x1 = cx-distance/2  # drone1 x
+        y2 = cy+(distance)*math.cos(math.pi/6) #drone2 y
+        x2 = cx-distance/2 #drone2 x
 
-        y3= cy #drone 3 y
+        y3 = cy #drone 3 y
         x3 = cx+distance
         final_xy = [x1,y1,x2,y2,x3,y3]
         return final_xy
@@ -859,6 +859,7 @@ class MinimalPublisher(Node):
 
                 
             self.mission_logger.update({payload_idx[i]:mission})
+
 
 
                         
