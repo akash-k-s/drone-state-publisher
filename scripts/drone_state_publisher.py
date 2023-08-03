@@ -30,8 +30,7 @@ Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
 # enter the uris need to be in swarm
-#uris = [Y,N,F]
-uris = [Y]
+uris = [Y,V,F]
 # enter the mission and activate the required drones
 
 drone = [[0,1,0],
@@ -42,7 +41,7 @@ drone = [[0,1,0],
 payload_idx = [0,1,2]
 
 # add mission pickup and drop off loactions
-mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0,-1]]]
+mission_position = [[[-0.1,-0.2],[-1,-1]],[[1,-1],[1,0]],[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
 distance_2 = 0.5
@@ -363,14 +362,14 @@ class MinimalPublisher(Node):
 
     def start(self):
         print("started")
-        #self.missions() # missions assigned to each drone
-        #self.missions_checker()
+        self.missions() # missions assigned to each drone
+        self.missions_checker()
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
-            #swarm.parallel_safe(self.take_off)
+            swarm.parallel_safe(self.take_off)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
             print("done init")
@@ -527,7 +526,7 @@ class MinimalPublisher(Node):
 
             elif(mission[1][0]==1):
                 print("picking up")
-                down_distance = 0.4
+                down_distance = 0.16
                 check = 1
                 for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
@@ -612,7 +611,7 @@ class MinimalPublisher(Node):
                     ]
             elif(mission[1][0]==5):
                 print("drop done")
-                distance_down = 0.4
+                distance_down = 0.25
                 check = 1
                 self.mission_logger.update({i:mission})
                 if(len(mission[0])==1):
@@ -903,7 +902,7 @@ class MinimalPublisher(Node):
         allowed_distance = 0.1
         try:
             height = self.position_data.get(drone_uri)[4]
-            distance_vertical = height - mention_distance
+            distance_vertical = abs(height - mention_distance)
 
             if distance_vertical <=allowed_distance:
                 drone_reached = 1
