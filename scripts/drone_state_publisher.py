@@ -377,18 +377,17 @@ class MinimalPublisher(Node):
             data = True
             while(data):
                 print("in while loop")
-                #rclpy.spin_once(self)
-                #self.missions_checker()
-                """
+                rclpy.spin_once(self)
+                self.missions_checker()
+                
                 print(f'total drones completed mission: {self.drones_complete}')
                 if(self.drones_complete==len(uris)):
                     data = False
-                """
-                #self.mission_distance_checker()
-                #seq_=self.seq()
-                #swarm.parallel_safe(self.run_sequence, args_dict=seq_)
-                self.vertical_distance_checker(uris[0])
-            #swarm.parallel_safe(self.land)
+                
+                self.mission_distance_checker()
+                seq_=self.seq()
+                swarm.parallel_safe(self.run_sequence, args_dict=seq_)
+            swarm.parallel_safe(self.land)
     
 
 
@@ -404,7 +403,7 @@ class MinimalPublisher(Node):
         self.position_data[scf] = [self.x,self.y,self.vx,self.vy,self.z,scf]
     
 
-        #self.timer_callback()   
+        self.timer_callback()   
         
 
     def simple_log_async(self,scf):
