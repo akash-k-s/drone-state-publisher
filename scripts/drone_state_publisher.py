@@ -29,17 +29,26 @@ F = 'radio://0/100/2M/E7E7E7E707'  # F
 Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
-uris = [Y,N,F]
+# enter the uris need to be in swarm
+#uris = [Y,N,F]
+uris = [Y]
+# enter the mission and activate the required drones
 
 drone = [[0,1,0],
          [1,0,1],
          [1,1,1]]
-        
+
+
 payload_idx = [0,1,2]
+
+# add mission pickup and drop off loactions
 mission_position = [[[0,0],[1,1]],[[1,-1],[1,0]],[[-1,1],[0,-1]]]
 
+# adjust the distance between 2 and 3 drones
 distance_2 = 0.5
 distance_3 = 0.5
+
+
 class MinimalPublisher(Node):
     
     global uris
@@ -55,8 +64,6 @@ class MinimalPublisher(Node):
         self.factory = CachedCfFactory(rw_cache='./cache')
         self.publishernode()
         self.SubcriberNode()
-        print("spinning")
-        # rclpy.spin(self)
         self.start()
 
     def publishernode(self):
@@ -67,8 +74,6 @@ class MinimalPublisher(Node):
         self.publisher_waypoints=self.create_publisher(Float64MultiArray,'drones_goals',10)
         self.publisher_radii = self.create_publisher(Float64MultiArray,'drones_radii',10)
         self.tf_broadcaster = TransformBroadcaster(self)
-        timer_period = 0.05 # seconds
-        print("start")
         self.position_data = dict()
         self.waypoint_data =dict()
         self.path_dict =dict()
@@ -86,12 +91,10 @@ class MinimalPublisher(Node):
         self.waypoint_publisher.data = [0.0]*2*self.number_drones
     
     def timer_callback(self):
-        # print("in timer")
         msg = Int32()
         self.number_drones=len(uris)
         msg.data = self.number_drones
         self.publisher_.publish(msg)
-        #print("creating drones instance")
 
         self.publisher_active.publish(self.drone_active_list)
 
@@ -99,7 +102,7 @@ class MinimalPublisher(Node):
 
         for i in range(len(payload_idx)):
             mission = self.mission_logger.get(payload_idx[i])
-            """ check mission len once and published data"""
+
             if (mission[1][0]==4):
 
                 if(len(mission[0])==1):
@@ -109,16 +112,13 @@ class MinimalPublisher(Node):
                     data = []
                     data = self.path_drones_2(mission[0][0],mission[0][1])
                     self.position_data_final.update({mission[0][0]:data})
-                    #data = self.position_data.get(mission[0][1])
                     self.position_data_final.update({mission[0][1]:data})
                   
                 elif(len(mission[0])==5):
                     data = []
                     data = self.path_drones_3(mission[0][0],mission[0][1],mission[0][2])
                     self.position_data_final.update({mission[0][0]:data})
-                    #data = self.position_data.get(mission[0][1])
                     self.position_data_final.update({mission[0][1]:data})
-                    #data = self.position_data.get(mission[0][2])
                     self.position_data_final.update({mission[0][2]:data})
 
             else:
@@ -363,28 +363,32 @@ class MinimalPublisher(Node):
 
     def start(self):
         print("started")
-        self.missions() # missions assigned to each drone
-        self.missions_checker()
+        #self.missions() # missions assigned to each drone
+        #self.missions_checker()
         with Swarm(uris, factory=self.factory) as swarm:
             swarm.reset_estimators()
             print("reset done")
             self.swarm_ =swarm 
             swarm.parallel_safe(self.simple_log_async)
-            swarm.parallel_safe(self.take_off)
+            #swarm.parallel_safe(self.take_off)
             self.pickup_complete_list = dict()
             self.seq_list_creator()
-            
+            print("done init")
             data = True
             while(data):
-                rclpy.spin_once(self)
-                self.missions_checker()
+                print("in while loop")
+                #rclpy.spin_once(self)
+                #self.missions_checker()
+                """
                 print(f'total drones completed mission: {self.drones_complete}')
                 if(self.drones_complete==len(uris)):
                     data = False
-                self.mission_distance_checker()
-                seq_=self.seq()
-                swarm.parallel_safe(self.run_sequence, args_dict=seq_)
-            swarm.parallel_safe(self.land)
+                """
+                #self.mission_distance_checker()
+                #seq_=self.seq()
+                #swarm.parallel_safe(self.run_sequence, args_dict=seq_)
+                self.vertical_distance_checker(uris[0])
+            #swarm.parallel_safe(self.land)
     
 
 
@@ -395,11 +399,12 @@ class MinimalPublisher(Node):
         self.y = float(data['stateEstimate.y'])
         self.vx = float(data['stateEstimate.vx'])
         self.vy = float(data['stateEstimate.vy'])
+        self.z = float(data['stateEstimate.z'])
         
-        self.position_data[scf] = [self.x,self.y,self.vx,self.vy,scf]
-        # print("got data")
-        #time.sleep(0.7)
-        self.timer_callback()   
+        self.position_data[scf] = [self.x,self.y,self.vx,self.vy,self.z,scf]
+    
+
+        #self.timer_callback()   
         
 
     def simple_log_async(self,scf):
@@ -407,14 +412,13 @@ class MinimalPublisher(Node):
         lg_stab.add_variable('stateEstimate.x', 'float')
         lg_stab.add_variable('stateEstimate.y', 'float')
         lg_stab.add_variable('stateEstimate.vx', 'float')
-        lg_stab.add_variable('stateEstimate.vy', 'float')     
+        lg_stab.add_variable('stateEstimate.vy', 'float') 
+        lg_stab.add_variable('stateEstimate.z','float')    
         print("added variables")
         cf=scf.cf
         cf.log.add_config(lg_stab)
         lg_stab.data_received_cb.add_callback(lambda t, d, l: self.log_stab_callback(cf.link_uri, t, d, l))
         lg_stab.start()
-        #time.sleep(2)
-        #lg_stab.stop()
 
     
     
@@ -506,41 +510,62 @@ class MinimalPublisher(Node):
                 continue
             elif(mission[1][0]==0):
                 print("going to pickup")
-                for j in range(len(mission[0])):
+                up_distance = 1
+                for j in range(len(mission[0])):   
                     index = uris.index(mission[0][j])
-                    self.seq_list[index] = [
-                        (setpoints_list[index][0][0],setpoints_list[index][0][1],1,0,duration)
-                    ]
+                    distance_check  = self.vertical_distance(uris[index],up_distance)
+                    if distance_check == 1:
+                        self.seq_list[index] = [
+                            (setpoints_list[index][0][0],setpoints_list[index][0][1],up_distance,0,duration)
+                        ]
+                    else:
+                        current_x = self.position_data.get(uris[index])[0]
+                        current_y = self.position_data.get(uris[index])[1]
+
+                        self.seq_list[index] = [
+                            (current_x,current_y,up_distance,0,duration)
+                        ]
 
             elif(mission[1][0]==1):
                 print("picking up")
+                down_distance = 0.4
+                check = 1
                 for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
                     self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],0.4,0,duration)
+                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
                     ]
                     if j==0:
                         index_0 = index
                         self.drone_active_list.data[index] = 1
                     else:
                         self.drone_active_list.data[index] = 0   
-                
+                    
+                    vertical_check = self.vertical_distance(uris[index],down_distance)
+                    check = check * vertical_check 
+
                 if len(mission[0]) == 2:
                     self.radius_list.data[index_0] = 0.275
                 elif len(mission[0]) == 3:
                     self.radius_list.data[index_0] = 0.4
-
-                mission[1][0]=2
+                
+                if check == 1:
+                    mission[1][0]=2
                 self.mission_logger.update({i:mission})
 
             elif(mission[1][0]==2):
                 print("pickup done")
+                check = 1
+                up_distance = 1
                 for j in range(len(mission[0])):
                     index = uris.index(mission[0][j])
                     self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],1,0,duration)
+                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],up_distance,0,duration)
                     ]
-                mission[1][0]=3
+                    vertical_check = self.vertical_distance(uris[index],up_distance)
+                    check = check * vertical_check
+                if check ==1:
+                    mission[1][0]=3
                 self.mission_logger.update({i:mission})
                     # update way point
             
@@ -588,13 +613,16 @@ class MinimalPublisher(Node):
                     ]
             elif(mission[1][0]==5):
                 print("drop done")
-                mission[1][0] = 6
+                distance_down = 0.4
+                check = 1
                 self.mission_logger.update({i:mission})
                 if(len(mission[0])==1):
                     index = uris.index(mission[0][0])
                     self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],0.4,0,duration)
+                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
+                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    check = check * vertical_check
 
                 elif(len(mission[0])==2):
                     distance = 0.5
@@ -602,12 +630,14 @@ class MinimalPublisher(Node):
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     self.seq_list[index] = [
-                        (x-distance,y,0.4,0,duration)
+                        (x-distance,y,distance_down,0,duration)
                     ]
+                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    check = check * vertical_check
                     self.radius_list.data[index] = 0.15
                     index = uris.index(mission[0][1])
                     self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],0.4,0,duration)
+                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
@@ -621,29 +651,38 @@ class MinimalPublisher(Node):
                     ]
                     self.radius_list.data[index] = 0.15
 
+                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    check = check * vertical_check
+
                     index = uris.index(mission[0][1])
                     self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],0.4,0,duration)
+                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
+
+                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    check = check * vertical_check
 
                     index = uris.index(mission[0][2])
                     self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],0.4,0,duration)
+                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
-                
 
+                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    check = check * vertical_check
+                if check == 1:
+                    mission[1][0] = 6
 
-                poped_element = payload_idx[i]
-                # mission_position.pop(i)
-                for  j in range(len(drone[poped_element])):
-                    if drone[poped_element][j]==1:
-                        drone_mission = self.drone_planner.get(uris[j])
-                        drone_mission.pop(0)
-                        self.drone_planner.update({uris[j]:drone_mission})
+                    poped_element = payload_idx[i]
+                    # mission_position.pop(i)
+                    for  j in range(len(drone[poped_element])):
+                        if drone[poped_element][j]==1:
+                            drone_mission = self.drone_planner.get(uris[j])
+                            drone_mission.pop(0)
+                            self.drone_planner.update({uris[j]:drone_mission})
                     
 
 
@@ -860,7 +899,22 @@ class MinimalPublisher(Node):
                 
             self.mission_logger.update({payload_idx[i]:mission})
 
+    def vertical_distance(self,drone_uri,mention_distance):
 
+        allowed_distance = 0.1
+        try:
+            height = self.position_data.get(drone_uri)[4]
+            distance_vertical = height - mention_distance
+
+            if distance_vertical <=allowed_distance:
+                drone_reached = 1
+            else:
+                drone_reached = 0 
+        except:
+            print("skipping height once")
+            drone_reached = 0
+        
+        return drone_reached
 
                         
 def main(args=None):
