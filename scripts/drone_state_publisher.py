@@ -30,18 +30,20 @@ Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
 # enter the uris need to be in swarm
-uris = [Y,V,F]
+uris = [Y]
 # enter the mission and activate the required drones
 
-drone = [[0,1,0],
-         [1,0,1]]
+drone = [[1],
+         [1]]
+
+#         [1,1,1]]
 
 
 payload_idx = [0,1]
 
 # add mission pickup and drop off loactions
 mission_position = [[[-0.1,-0.2],[-1,-1]],[[1,-1],[1,0]]]
-#,[[1,1],[-0.5,0.3]]]
+                    #,[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
 distance_2 = 0.195
@@ -438,7 +440,7 @@ class MinimalPublisher(Node):
 
     def take_off(self,scf):
         commander= scf.cf.high_level_commander
-        commander.takeoff(1.0, 2.0)
+        commander.takeoff(0.5, 2.0)
         time.sleep(3)
 
     def land(self,scf):
@@ -511,7 +513,7 @@ class MinimalPublisher(Node):
                 continue
             elif(mission[1][0]==0):
                 print("going to pickup")
-                up_distance = 1
+                up_distance = 0.5
                 for j in range(len(mission[0])):   
                     index = uris.index(mission[0][j])
                     distance_check  = self.vertical_distance(uris[index],up_distance)
@@ -532,7 +534,7 @@ class MinimalPublisher(Node):
 
             elif(mission[1][0]==1):
                 print("picking up")
-                down_distance = 0.16
+                down_distance = 0.1
                 check = 1
                 for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
@@ -647,6 +649,7 @@ class MinimalPublisher(Node):
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = distance_down
+                    duration = 2 * self.duration_calculator(uris[index],x,y,z) 
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
@@ -737,7 +740,7 @@ class MinimalPublisher(Node):
             print('Setting position {} to cf {}'.format((x, y, z,yaw), cf.link_uri))
             #commander.set_default_velocity(0.01)
             commander.go_to(x, y, z, yaw, duration, relative=False)
-            #time.sleep(1)
+            time.sleep(1)
 
     def path_drones_3(self,uri_1,uri_2,uri_3): # 
         y1 = self.position_data.get(uri_1)[1]
