@@ -34,18 +34,20 @@ uris = [Y,V,F]
 # enter the mission and activate the required drones
 
 drone = [[0,1,0],
-         [1,0,1],
-         [1,1,1]]
+         [1,0,1]]
 
 
-payload_idx = [0,1,2]
+payload_idx = [0,1]
 
 # add mission pickup and drop off loactions
-mission_position = [[[-0.1,-0.2],[-1,-1]],[[1,-1],[1,0]],[[1,1],[-0.5,0.3]]]
+mission_position = [[[-0.1,-0.2],[-1,-1]],[[1,-1],[1,0]]]
+#,[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
-distance_2 = 0.5
+distance_2 = 0.195
 distance_3 = 0.5
+
+velocity = 0.1
 
 
 class MinimalPublisher(Node):
@@ -56,6 +58,7 @@ class MinimalPublisher(Node):
     global mission_position
     global distance_2
     global distance_3
+    global velocity
 
     def __init__(self):
         super().__init__('minimal_publisher')
@@ -513,13 +516,16 @@ class MinimalPublisher(Node):
                     index = uris.index(mission[0][j])
                     distance_check  = self.vertical_distance(uris[index],up_distance)
                     if distance_check == 1:
-                        self.seq_list[index] = [
-                            (setpoints_list[index][0][0],setpoints_list[index][0][1],up_distance,0,duration)
-                        ]
+                        x = setpoints_list[index][0][0]
+                        y = setpoints_list[index][0][1]
+                        z = up_distance
+                        duration = self.duration_calculator(uris[index],x,y,z) 
+                        self.seq_list[index] = [(x,y,z,0,duration)]
                     else:
                         current_x = self.position_data.get(uris[index])[0]
                         current_y = self.position_data.get(uris[index])[1]
-
+                        z = up_distance
+                        duration = self.duration_calculator(uris[index],current_x,current_y,z) 
                         self.seq_list[index] = [
                             (current_x,current_y,up_distance,0,duration)
                         ]
@@ -530,6 +536,10 @@ class MinimalPublisher(Node):
                 check = 1
                 for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
+                    x = self.waypoint_data.get(uris[index])[0]
+                    y = self.waypoint_data.get(uris[index])[1]
+                    z = down_distance
+                    duration = self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
                     ]
@@ -554,9 +564,14 @@ class MinimalPublisher(Node):
             elif(mission[1][0]==2):
                 print("pickup done")
                 check = 1
-                up_distance = 1
+                up_distance = 0.5
                 for j in range(len(mission[0])):
                     index = uris.index(mission[0][j])
+                    x = self.waypoint_data.get(uris[index])[0]
+                    y = self.waypoint_data.get(uris[index])[1]
+                    z = up_distance
+                    duration = 2 * self.duration_calculator(uris[index],x,y,z)
+
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],up_distance,0,duration)
                     ]
@@ -569,53 +584,69 @@ class MinimalPublisher(Node):
             
             elif(mission[1][0]==4):
                 print("going to waypoint")
-                print(len(mission[0]))
-                print(mission[0])
+                up_distance = 0.5
                 if(len(mission[0])==1):
                     index = uris.index(mission[0][0])
+                    x = setpoints_list[index][0][0]
+                    y = setpoints_list[index][0][1]
+                    z = up_distance
+                    duration = 2* self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
-                        (setpoints_list[index][0][0],setpoints_list[index][0][1],1,0,duration)
+                        (setpoints_list[index][0][0],setpoints_list[index][0][1],up_distance,0,duration)
                     ]
                 
                 elif(len(mission[0])==4):
                     index  = uris.index(mission[0][0])
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][1]]
                     final_xy = self.path_follower_2(data)
-                    print(data)
-                    print(final_xy)
+                    
+                    x = data[0]
+                    y = data[1]
+                    z = up_distance
+                    duration = 2 * self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
-                        (final_xy[0], final_xy[1],1,0,duration)
+                        (final_xy[0], final_xy[1],up_distance,0,duration)
                     ]
                     index = uris.index(mission[0][1])
                     self.seq_list[index] = [
-                        (final_xy[2],final_xy[3],1,0,duration)
+                        (final_xy[2],final_xy[3],up_distance,0,duration)
                     ]
                 
                 elif(len(mission[0])==5):
 
+
                     index  = uris.index(mission[0][0])
+
                     data = [setpoints_list[index][0][0],setpoints_list[index][0][1]]
+
+                    x = data[0]
+                    y = data[1]
+                    z = up_distance
+                    duration = 2 * self.duration_calculator(uris[index],x,y,z)
+
                     final_xy = self.path_follower_3(data)
-                    print(data)
-                    print(final_xy)
                     self.seq_list[index] = [
-                        (final_xy[0], final_xy[1],1,0,duration)
+                        (final_xy[0], final_xy[1],z,0,duration)
                     ]
                     index = uris.index(mission[0][1])
                     self.seq_list[index] = [
-                        (final_xy[2],final_xy[3],1,0,duration)
+                        (final_xy[2],final_xy[3],z,0,duration)
                     ]
                     index = uris.index(mission[0][2])
                     self.seq_list[index] = [
-                        (final_xy[4],final_xy[5],1,0,duration)
+                        (final_xy[4],final_xy[5],z,0,duration)
                     ]
             elif(mission[1][0]==5):
+
                 print("drop done")
                 distance_down = 0.25
                 check = 1
                 self.mission_logger.update({i:mission})
                 if(len(mission[0])==1):
                     index = uris.index(mission[0][0])
+                    x = self.waypoint_data.get(uris[index])[0]
+                    y = self.waypoint_data.get(uris[index])[1]
+                    z = distance_down
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
@@ -704,9 +735,9 @@ class MinimalPublisher(Node):
             duration = arguments[4]
 
             print('Setting position {} to cf {}'.format((x, y, z,yaw), cf.link_uri))
-            #commander.set_default_velocity(0.2)
+            #commander.set_default_velocity(0.01)
             commander.go_to(x, y, z, yaw, duration, relative=False)
-            time.sleep(1)
+            #time.sleep(1)
 
     def path_drones_3(self,uri_1,uri_2,uri_3): # 
         y1 = self.position_data.get(uri_1)[1]
@@ -914,7 +945,17 @@ class MinimalPublisher(Node):
         
         return drone_reached
 
-                        
+    def duration_calculator(self,uri,x,y,z):
+        current_x = self.position_data_final.get(uri)[0]
+        current_y = self.position_data_final.get(uri)[1]
+        cuurent_z = self.position_data.get(uri)[4]
+
+        distance = math.sqrt((current_x-x)**2 + (current_y-y)**2 + (cuurent_z - z)**2)
+
+        duration = distance/velocity
+
+        return duration
+
 def main(args=None):
     rclpy.init(args=args)
     minimal_publisher = MinimalPublisher()
