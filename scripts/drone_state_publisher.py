@@ -30,11 +30,11 @@ Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 
 # enter the uris need to be in swarm
-uris = [Y]
+uris = [V,Y,F]
 # enter the mission and activate the required drones
 
-drone = [[1],
-         [1]]
+drone = [[0,0,1],
+         [1,1,0]]
 
 #         [1,1,1]]
 
@@ -46,10 +46,10 @@ mission_position = [[[-0.1,-0.2],[-1,-1]],[[1,-1],[1,0]]]
                     #,[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
-distance_2 = 0.195
+distance_2 = 0.19
 distance_3 = 0.5
 
-velocity = 0.1
+velocity = 0.15
 
 
 class MinimalPublisher(Node):
@@ -440,7 +440,7 @@ class MinimalPublisher(Node):
 
     def take_off(self,scf):
         commander= scf.cf.high_level_commander
-        commander.takeoff(0.5, 2.0)
+        commander.takeoff(1, 2.0)
         time.sleep(3)
 
     def land(self,scf):
@@ -513,7 +513,7 @@ class MinimalPublisher(Node):
                 continue
             elif(mission[1][0]==0):
                 print("going to pickup")
-                up_distance = 0.5
+                up_distance = 1
                 for j in range(len(mission[0])):   
                     index = uris.index(mission[0][j])
                     distance_check  = self.vertical_distance(uris[index],up_distance)
@@ -534,7 +534,7 @@ class MinimalPublisher(Node):
 
             elif(mission[1][0]==1):
                 print("picking up")
-                down_distance = 0.1
+                down_distance = 0.08
                 check = 1
                 for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
@@ -566,13 +566,13 @@ class MinimalPublisher(Node):
             elif(mission[1][0]==2):
                 print("pickup done")
                 check = 1
-                up_distance = 0.5
+                up_distance = 1
                 for j in range(len(mission[0])):
                     index = uris.index(mission[0][j])
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = up_distance
-                    duration = 2 * self.duration_calculator(uris[index],x,y,z)
+                    duration =  self.duration_calculator(uris[index],x,y,z)
 
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],up_distance,0,duration)
@@ -586,13 +586,13 @@ class MinimalPublisher(Node):
             
             elif(mission[1][0]==4):
                 print("going to waypoint")
-                up_distance = 0.5
+                up_distance = 1
                 if(len(mission[0])==1):
                     index = uris.index(mission[0][0])
                     x = setpoints_list[index][0][0]
                     y = setpoints_list[index][0][1]
                     z = up_distance
-                    duration = 2* self.duration_calculator(uris[index],x,y,z)
+                    duration =  self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
                         (setpoints_list[index][0][0],setpoints_list[index][0][1],up_distance,0,duration)
                     ]
@@ -624,7 +624,7 @@ class MinimalPublisher(Node):
                     x = data[0]
                     y = data[1]
                     z = up_distance
-                    duration = 2 * self.duration_calculator(uris[index],x,y,z)
+                    duration =  self.duration_calculator(uris[index],x,y,z)
 
                     final_xy = self.path_follower_3(data)
                     self.seq_list[index] = [
@@ -649,7 +649,7 @@ class MinimalPublisher(Node):
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = distance_down
-                    duration = 2 * self.duration_calculator(uris[index],x,y,z) 
+                    duration =  self.duration_calculator(uris[index],x,y,z) 
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
@@ -933,7 +933,7 @@ class MinimalPublisher(Node):
 
     def vertical_distance(self,drone_uri,mention_distance):
 
-        allowed_distance = 0.1
+        allowed_distance = 0.02
         try:
             height = self.position_data.get(drone_uri)[4]
             distance_vertical = abs(height - mention_distance)
