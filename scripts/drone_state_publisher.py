@@ -30,7 +30,7 @@ Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 W = 'radio://0/100/2M/E7E7E7E703'
 # enter the uris need to be in swarm
-uris = [F,Y,W]
+uris = [V,F,W]
 # enter the mission and activate the required drones
 
 drone = [[0,0,1],
@@ -42,14 +42,14 @@ drone = [[0,0,1],
 payload_idx = [0,1]
 
 # add mission pickup and drop off loactions
-mission_position = [[[0,1],[-0.5,-1]],[[1,-1],[-1.2,-0.7]]]
+mission_position = [[[0,1],[1,0]],[[0,0],[-1,0]]]
                     #,[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
 distance_2 = 0.19
 distance_3 = 0.5
 
-velocity = 0.5
+velocity = 0.25
 
 
 class MinimalPublisher(Node):
@@ -534,14 +534,14 @@ class MinimalPublisher(Node):
 
             elif(mission[1][0]==1):
                 print("picking up")
-                down_distance = 0.08
+                down_distance = 0.50
                 check = 1
                 for j in (range(len(mission[0]))):
                     index = uris.index(mission[0][j])
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = down_distance
-                    duration = self.duration_calculator(uris[index],x,y,z)
+                    duration = 2.5 * self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
                     ]
@@ -572,7 +572,7 @@ class MinimalPublisher(Node):
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = up_distance
-                    duration =  self.duration_calculator(uris[index],x,y,z)
+                    duration =  2.2 * self.duration_calculator(uris[index],x,y,z)
 
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],up_distance,0,duration)
@@ -641,7 +641,7 @@ class MinimalPublisher(Node):
             elif(mission[1][0]==5):
 
                 print("drop done")
-                distance_down = 0.08
+                distance_down = 0.50
                 check = 1
                 self.mission_logger.update({i:mission})
                 if(len(mission[0])==1):
