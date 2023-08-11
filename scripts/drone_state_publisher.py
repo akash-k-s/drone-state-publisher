@@ -30,7 +30,7 @@ Y = 'radio://0/100/2M/E7E7E7E706' # Y
 P = 'radio://0/100/2M/E7E7E7E704'
 W = 'radio://0/100/2M/E7E7E7E703'
 # enter the uris need to be in swarm
-uris = [V,F,W]
+uris = [V,Y,W]
 # enter the mission and activate the required drones
 
 drone = [[0,0,1],
@@ -42,11 +42,11 @@ drone = [[0,0,1],
 payload_idx = [0,1]
 
 # add mission pickup and drop off loactions
-mission_position = [[[0,1],[1,0]],[[0,0],[-1,0]]]
+mission_position = [[[1.1,0],[1,0]],[[0,0],[-1,0]]]
                     #,[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
-distance_2 = 0.19
+distance_2 = 0.186
 distance_3 = 0.5
 
 velocity = 0.25
@@ -370,6 +370,7 @@ class MinimalPublisher(Node):
         self.missions() # missions assigned to each drone
         self.missions_checker()
         with Swarm(uris, factory=self.factory) as swarm:
+            print("in_reset")
             swarm.reset_estimators()
             print("reset done")
             self.swarm_ =swarm 
@@ -516,7 +517,7 @@ class MinimalPublisher(Node):
                 up_distance = 1
                 for j in range(len(mission[0])):   
                     index = uris.index(mission[0][j])
-                    distance_check  = self.vertical_distance(uris[index],up_distance)
+                    distance_check  = self.vertical_distance(uris[index],up_distance,0.02)
                     if distance_check == 1:
                         x = setpoints_list[index][0][0]
                         y = setpoints_list[index][0][1]
@@ -541,7 +542,7 @@ class MinimalPublisher(Node):
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = down_distance
-                    duration = 2.5 * self.duration_calculator(uris[index],x,y,z)
+                    duration = 1.5 * self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
                     ]
@@ -551,7 +552,7 @@ class MinimalPublisher(Node):
                     else:
                         self.drone_active_list.data[index] = 0   
                     
-                    vertical_check = self.vertical_distance(uris[index],down_distance)
+                    vertical_check = self.vertical_distance(uris[index],down_distance,0.02)
                     check = check * vertical_check 
 
                 if len(mission[0]) == 2:
@@ -577,7 +578,7 @@ class MinimalPublisher(Node):
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],up_distance,0,duration)
                     ]
-                    vertical_check = self.vertical_distance(uris[index],up_distance)
+                    vertical_check = self.vertical_distance(uris[index],up_distance,0.1)
                     check = check * vertical_check
                 if check ==1:
                     mission[1][0]=3
@@ -653,7 +654,7 @@ class MinimalPublisher(Node):
                     self.seq_list[index] = [
                         (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],distance_down,0,duration)
                     ]
-                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    vertical_check = self.vertical_distance(uris[index],distance_down,0.02)
                     check = check * vertical_check
 
                 elif(len(mission[0])==4):
@@ -666,7 +667,7 @@ class MinimalPublisher(Node):
                     self.seq_list[index] = [
                         (x,y-distance,distance_down,0,duration)
                     ]
-                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    vertical_check = self.vertical_distance(uris[index],distance_down,0.05)
                     check = check * vertical_check
                     self.radius_list.data[index] = 0.15
                     index = uris.index(mission[0][1])
@@ -685,7 +686,7 @@ class MinimalPublisher(Node):
                     ]
                     self.radius_list.data[index] = 0.15
 
-                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    vertical_check = self.vertical_distance(uris[index],distance_down,0.05)
                     check = check * vertical_check
 
                     index = uris.index(mission[0][1])
@@ -695,7 +696,7 @@ class MinimalPublisher(Node):
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
 
-                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    vertical_check = self.vertical_distance(uris[index],distance_down,0.05)
                     check = check * vertical_check
 
                     index = uris.index(mission[0][2])
@@ -705,7 +706,7 @@ class MinimalPublisher(Node):
                     self.drone_active_list.data[index] = 1
                     self.radius_list.data[index] = 0.15
 
-                    vertical_check = self.vertical_distance(uris[index],distance_down)
+                    vertical_check = self.vertical_distance(uris[index],distance_down,0.05)
                     check = check * vertical_check
                 if check == 1:
                     mission[1][0] = 6
@@ -933,9 +934,9 @@ class MinimalPublisher(Node):
                 
             self.mission_logger.update({payload_idx[i]:mission})
 
-    def vertical_distance(self,drone_uri,mention_distance):
+    def vertical_distance(self,drone_uri,mention_distance,allowed_distance):
 
-        allowed_distance = 0.02
+        allowed_distance = allowed_distance
         try:
             height = self.position_data.get(drone_uri)[4]
             distance_vertical = abs(height - mention_distance)
