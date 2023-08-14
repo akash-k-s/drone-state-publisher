@@ -46,7 +46,7 @@ mission_position = [[[1.1,0],[1,0]],[[0,0],[-1,0]]]
                     #,[[1,1],[-0.5,0.3]]]
 
 # adjust the distance between 2 and 3 drones
-distance_2 = 0.186
+distance_2 = 0.192
 distance_3 = 0.5
 
 velocity = 0.25
@@ -535,17 +535,30 @@ class MinimalPublisher(Node):
 
             elif(mission[1][0]==1):
                 print("picking up")
-                down_distance = 0.50
+                
                 check = 1
                 for j in (range(len(mission[0]))):
-                    index = uris.index(mission[0][j])
-                    x = self.waypoint_data.get(uris[index])[0]
-                    y = self.waypoint_data.get(uris[index])[1]
-                    z = down_distance
-                    duration = 1.5 * self.duration_calculator(uris[index],x,y,z)
-                    self.seq_list[index] = [
-                        (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
+                    if len(mission[0])==1:
+                        down_distance = 0.08
+                        index = uris.index(mission[0][j])
+                        x = self.waypoint_data.get(uris[index])[0]
+                        y = self.waypoint_data.get(uris[index])[1]
+                        z = down_distance
+                        duration = 1.5 * self.duration_calculator(uris[index],x,y,z)
+                        self.seq_list[index] = [
+                            (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
                     ]
+                    
+                    else:
+                        down_distance = 0.50
+                        index = uris.index(mission[0][j])
+                        x = self.waypoint_data.get(uris[index])[0]
+                        y = self.waypoint_data.get(uris[index])[1]
+                        z = down_distance
+                        duration = 1.5 * self.duration_calculator(uris[index],x,y,z)
+                        self.seq_list[index] = [
+                            (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)]
+                        
                     if j==0:
                         index_0 = index
                         self.drone_active_list.data[index] = 1
