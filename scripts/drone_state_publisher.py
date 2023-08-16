@@ -35,14 +35,28 @@ uris = [V,Y,W,N]
 
 drone = [[0,0,1,0],
          [1,1,0,0],
+         [0,0,0,1],
+         [0,1,0,0],
+         [1,0,0,0],
+         [1,0,0,0],
+         [0,1,0,0],
+         [0,0,1,0],
          [0,0,0,1]]
 
 
-payload_idx = [0,1,2]
+payload_idx = [0,1,2,3,4,5,6,7,8]
 
 # add mission pickup and drop off loactions
-mission_position = [[[1.5,0.25],[0.5,-1]],[[0,0],[-1,0]],[[0.5,0.25],[1.5,-1]]]
-                    #,[[1,1],[-0.5,0.3]]]
+mission_position = [[[1.5,0.25],[0.5,-1.0]],
+                    [[0.0,0.0],[-1.0,0.0]],
+                    [[0.5,0.25],[1.5,-1.0]],
+                    [[-1.25,0.5],[-0.75,0.75]],
+                    [[-0.75,-1.0],[-0.25,-0.75]],
+                    [[-0.5,-0.5],[-0.5,-0.5]],
+                    [[-0.5,0.5],[-0.5,0.5]],
+                    [[1.5,0.5],[1.5,0.5]],
+                    [[0.5,0.5],[0.5,0.5]]]
+
 
 # adjust the distance between 2 and 3 drones
 distance_2 = 0.192
@@ -65,6 +79,7 @@ class MinimalPublisher(Node):
         super().__init__('minimal_publisher')
         cflib.crtp.init_drivers()
         self.factory = CachedCfFactory(rw_cache='./cache')
+        self.pay_tf_data()
         self.publishernode()
         self.SubcriberNode()
         self.start()
@@ -156,17 +171,19 @@ class MinimalPublisher(Node):
         #print(self.waypoint_publisher)
         self.publisher_waypoints.publish(self.waypoint_publisher)
         self.Transform_Publisher()
+        self.Transform_Publisher_1()
 
     def Transform_Publisher(self):
         for i in range(self.number_drones):
             tf_msg = TransformStamped()
             tf_msg.header.frame_id = 'odom'
-            tf_msg.child_frame_id = str("drone")+str(i)
+            tf_msg.child_frame_id = str("drone")+str(i)+str("/base_link")
             tf_msg.header.stamp = self.get_clock().now().to_msg()
 
             try:
                 tf_msg.transform.translation.x = self.position_data.get(uris[i])[0]
                 tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
+                tf_msg.transform.translation.z = self.position_data.get(uris[i])[4]
                 #tf_msg.transform.translation.y = self.position_data.get(uris[i])[1]
         
 
@@ -174,6 +191,59 @@ class MinimalPublisher(Node):
             except:
                 print("skipping first trnsform publishin")
 
+    def Transform_Publisher_1(self):
+        for i in range(len(payload_idx)-len(uris)):
+            tf_msg_1 = TransformStamped()
+            tf_msg_1._header.frame_id = 'odom'
+            tf_msg_1.child_frame_id = str("payload")+str(i)+str("/base_link")
+            tf_msg_1._header.stamp = self.get_clock().now().to_msg()
+
+            
+            if(self.payload_status[i]==0):
+                #print(self.payload_position[i])
+                tf_msg_1.transform.translation.x = self.payload_position[i][0]
+                tf_msg_1.transform.translation.y = self.payload_position[i][1]
+                tf_msg_1.transform.translation.z = self.payload_position[i][2]
+            elif(self.payload_status[i]==1):
+                # pickup done
+                for j in range(len(drone[i])):
+                    if drone[i][j]==1:
+                        index = j
+                x = self.position_data_final.get(uris[index])[0]
+                tf_msg_1.transform.translation.x = x
+                y = self.position_data_final.get(uris[index])[1]
+                tf_msg_1.transform.translation.y = y
+                z = self.position_data.get(uris[index])[4] - 0.2
+                tf_msg_1.transform.translation.z = z
+                self.temp[i] = [x,y,z]
+            elif(self.payload_status[i]==2):
+                tf_msg_1.transform.translation.x = self.temp[i][0]
+                tf_msg_1.transform.translation.y = self.temp[i][1]
+                tf_msg_1.transform.translation.z = self.temp[i][2]
+
+
+            
+            self.tf_broadcaster.sendTransform(tf_msg_1)
+
+
+
+    def pay_tf_data(self):
+        self.payload_position =[]
+        self.payload_status =[]
+        self.temp =[]
+        for i in range(len(payload_idx)-len(uris)):
+            if sum(drone[i])==1:
+                payload_ = [mission_position[i][0][0],mission_position[i][0][1],0.0]
+            elif sum(drone[i])==2:
+                payload_ = [mission_position[i][0][0],mission_position[i][0][1],0.4]
+            self.payload_position.append(payload_)
+            self.payload_status.append(0)
+            self.temp.append(0)
+        for i in range(len(uris)):
+            self.payload_status.append(0)
+            self.temp.append(0)
+
+    
 
     """
     subcriber node 
@@ -508,6 +578,7 @@ class MinimalPublisher(Node):
             print(f'mission status:{mission[1][0]}')
 
             if(mission[1][0]==6):
+                self.payload_status[i] = 2
                 continue
             elif(mission[1][0]==-1):
                 continue
@@ -536,6 +607,7 @@ class MinimalPublisher(Node):
                 print("picking up")
                 
                 check = 1
+                
                 for j in (range(len(mission[0]))):
                     if len(mission[0])==1:
                         down_distance = 0.08
@@ -543,6 +615,8 @@ class MinimalPublisher(Node):
                         x = self.waypoint_data.get(uris[index])[0]
                         y = self.waypoint_data.get(uris[index])[1]
                         z = down_distance
+
+                        
                         duration = 1.2 * self.duration_calculator(uris[index],x,y,z)
                         self.seq_list[index] = [
                             (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)
@@ -554,6 +628,7 @@ class MinimalPublisher(Node):
                         x = self.waypoint_data.get(uris[index])[0]
                         y = self.waypoint_data.get(uris[index])[1]
                         z = down_distance
+                        
                         duration = 1.5 * self.duration_calculator(uris[index],x,y,z)
                         self.seq_list[index] = [
                             (self.waypoint_data.get(uris[index])[0],self.waypoint_data.get(uris[index])[1],down_distance,0,duration)]
@@ -578,6 +653,7 @@ class MinimalPublisher(Node):
 
             elif(mission[1][0]==2):
                 print("pickup done")
+                self.payload_status[i]=1
                 check = 1
                 up_distance = 1
                 for j in range(len(mission[0])):
@@ -585,6 +661,8 @@ class MinimalPublisher(Node):
                     x = self.waypoint_data.get(uris[index])[0]
                     y = self.waypoint_data.get(uris[index])[1]
                     z = up_distance
+
+
                     duration =  2.2 * self.duration_calculator(uris[index],x,y,z)
 
                     self.seq_list[index] = [
@@ -605,6 +683,7 @@ class MinimalPublisher(Node):
                     x = setpoints_list[index][0][0]
                     y = setpoints_list[index][0][1]
                     z = up_distance
+                    
                     duration =  self.duration_calculator(uris[index],x,y,z)
                     self.seq_list[index] = [
                         (setpoints_list[index][0][0],setpoints_list[index][0][1],up_distance,0,duration)
@@ -652,7 +731,7 @@ class MinimalPublisher(Node):
                         (final_xy[4],final_xy[5],z,0,duration)
                     ]
             elif(mission[1][0]==5):
-
+                
                 print("drop done")
                 distance_down = 0.08
                 check = 1
